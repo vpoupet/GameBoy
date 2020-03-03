@@ -1,0 +1,8 @@
+#screen {
+  --zoom: 2;
+  width: calc(var(--zoom) * 160);
+  height: calc(var(--zoom) * 144);
+  background: black;
+}
+
+/*# sourceMappingURL=style.css.map */
