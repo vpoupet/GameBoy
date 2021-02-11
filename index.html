@@ -1,13 +1,38 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="js/gameboy.js"></script>
-    <script src="js/opcodes.js"></script>
-    <script src="js/printOp.js"></script>
-    <script src="js/script.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
   </head>
   <body>
     <canvas id="screen"></canvas>
+    <button id="start-button">Start</button>
+    <button id="frame-button">Frame</button>
+    <button id="step-button">Step</button>
+    <button id="reset-button">Reset</button>
+    <div id="cpu-info"><span id="cpu-clock">clk: 0</span>
+      <table id="registers-table">
+        <tr>
+          <th>AF</th>
+          <th>BC</th>
+          <th>DE</th>
+          <th>HL</th>
+          <th>PC</th>
+          <th>SP</th>
+          <th>ZNHC</th>
+        </tr>
+        <tr id="registers-row">
+          <td>0000</td>
+          <td>0000</td>
+          <td>0000</td>
+          <td>0000</td>
+          <td>0000</td>
+          <td>0000</td>
+          <td>0000</td>
+        </tr>
+      </table>
+    </div>
+    <div id="asm"></div>
+    <canvas id="tiles"></canvas>
+    <script src="main.js"></script>
   </body>
 </html>

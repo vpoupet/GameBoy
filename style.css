@@ -1,7 +1,9 @@
+html {
+  box-sizing: border-box;
+  font-family: "Menlo", "Monaco", "monospace";
+}
+
 #screen {
-  --zoom: 2;
-  width: calc(var(--zoom) * 160);
-  height: calc(var(--zoom) * 144);
   background: black;
 }
 

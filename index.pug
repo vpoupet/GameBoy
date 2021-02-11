@@ -1,10 +1,32 @@
 doctype html
 html
   head
-    script(src="js/script.js")
-    script(src="js/gameboy.js")
-    script(src="js/opcodes.js")
-    script(src="js/printOp.js")
-    link(rel="stylesheet" href="style.css")
+    link(rel="stylesheet" href="./style.css")
   body
     canvas#screen
+    button#start-button Start
+    button#frame-button Frame
+    button#step-button Step
+    button#reset-button Reset
+    div#cpu-info
+      span#cpu-clock clk: 0
+      table#registers-table
+        tr
+          th AF
+          th BC
+          th DE
+          th HL
+          th PC
+          th SP
+          th ZNHC
+        tr#registers-row
+          td 0000
+          td 0000
+          td 0000
+          td 0000
+          td 0000
+          td 0000
+          td 0000
+    div#asm
+    canvas#tiles
+    script(src="main.js")

@@ -10,7 +10,7 @@ const opCodes = [
         // 01 - LD BC,d16
         // 3  12
         // - - - -
-        this.bc = this.mmu_get16(this.pc + 1);
+        this.bc = this.mmu.get16(this.pc + 1);
         this.pc += 3;
         this.clock += 12;
     },
@@ -18,7 +18,7 @@ const opCodes = [
         // 02 - LD (BC),A
         // 1  8
         // - - - -
-        this.mmu_set(this.bc, this.a);
+        this.mmu.set(this.bc, this.a);
         this.pc += 1;
         this.clock += 12;
     },
@@ -56,7 +56,7 @@ const opCodes = [
         // 06 - LD B,d8
         // 2  8
         // - - - -
-        this.b = this.mmu_get(this.pc + 1);
+        this.b = this.mmu.get(this.pc + 1);
         this.pc += 2;
         this.clock += 8;
     },
@@ -76,7 +76,7 @@ const opCodes = [
         // 08 -	LD (a16),SP
         // 3  20
         // - - - -
-        this.mmu_set16(this.mmu_get16(this.pc + 1), this.sp);
+        this.mmu.set16(this.mmu.get16(this.pc + 1), this.sp);
         this.pc += 3;
         this.clock += 20;
     },
@@ -96,7 +96,7 @@ const opCodes = [
         // 0A - LD A,(BC)
         // 1  8
         // - - - -
-        this.a = this.mmu_get(this.bc);
+        this.a = this.mmu.get(this.bc);
         this.pc += 1;
         this.clock += 8;
     },
@@ -123,7 +123,7 @@ const opCodes = [
         // 0D - DEC C
         // 1  4
         // Z 1 H -
-        this.flagH = this.c & 0x0f === 0;
+        this.flagH = (this.c & 0x0f) === 0;
         this.c -= 1;
         this.flagZ = this.c === 0;
         this.flagN = 1;
@@ -134,7 +134,7 @@ const opCodes = [
         // 0E - LD C,d8
         // 2  8
         // - - - -
-        this.c = this.mmu_get(this.pc + 1);
+        this.c = this.mmu.get(this.pc + 1);
         this.pc += 2;
         this.clock += 8;
     },
@@ -163,7 +163,7 @@ const opCodes = [
         // 11 - LD DE,d16
         // 3  12
         // - - - -
-        this.de = this.mmu_get16(this.pc + 1);
+        this.de = this.mmu.get16(this.pc + 1);
         this.pc += 3;
         this.clock += 12;
     },
@@ -171,7 +171,7 @@ const opCodes = [
         // 12 - LD (DE),A
         // 1  8
         // - - - -
-        this.mmu_set(this.mmu_get(this.de), this.a);
+        this.mmu.set(this.mmu.get(this.de), this.a);
         this.pc += 1;
         this.clock += 8;
     },
@@ -198,7 +198,7 @@ const opCodes = [
         // 15 - DEC D
         // 1  4
         // Z 1 H -
-        this.flagH = this.d & 0x0f === 0;
+        this.flagH = (this.d & 0x0f) === 0;
         this.d -= 1;
         this.flagZ = this.d === 0;
         this.flagN = 1;
@@ -209,7 +209,7 @@ const opCodes = [
         // 16 - LD D,d8
         // 2  8
         // - - - -
-        this.d = this.mmu_get(this.pc + 1);
+        this.d = this.mmu.get(this.pc + 1);
         this.pc += 2;
         this.clock += 8;
     },
@@ -231,7 +231,7 @@ const opCodes = [
         // 2  12
         // - - - -
         // Hack: convert UInt8 to Int8 with << 24 >> 24
-        this.pc += 2 + (this.mmu_get(this.pc + 1) << 24 >> 24);
+        this.pc += 2 + (this.mmu.get(this.pc + 1) << 24 >> 24);
         this.clock += 12;
     },
     function () {
@@ -250,7 +250,7 @@ const opCodes = [
         // 1A - LD A,(DE)
         // 1  8
         // - - - -
-        this.a = this.mmu_get(this.de);
+        this.a = this.mmu.get(this.de);
         this.pc += 1;
         this.clock += 8;
     },
@@ -288,7 +288,7 @@ const opCodes = [
         // 1E - LD E,d8
         // 2  8
         // - - - -
-        this.e = this.mmu_get(this.pc + 1);
+        this.e = this.mmu.get(this.pc + 1);
         this.pc += 2;
         this.clock += 8;
     },
@@ -311,7 +311,7 @@ const opCodes = [
         // - - - -
         if (!this.flagZ) {
             // jump
-            this.pc += 2 + (this.mmu_get(this.pc + 1) << 24 >> 24);
+            this.pc += 2 + (this.mmu.get(this.pc + 1) << 24 >> 24);
             this.clock += 12;
         } else {
             // don't jump
@@ -323,7 +323,7 @@ const opCodes = [
         // 21 - LD HL,d16
         // 3  12
         // - - - -
-        this.hl = this.mmu_get16(this.pc + 1);
+        this.hl = this.mmu.get16(this.pc + 1);
         this.pc += 3;
         this.clock += 12;
     },
@@ -331,7 +331,7 @@ const opCodes = [
         // 22 - LD (HL+),A
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.a);
+        this.mmu.set(this.hl, this.a);
         this.hl += 1;
         this.pc += 1;
         this.clock += 8;
@@ -370,7 +370,7 @@ const opCodes = [
         // 26 - LD H,d8
         // 2  8
         // - - - -
-        this.h = this.mmu_get(this.pc + 1);
+        this.h = this.mmu.get(this.pc + 1);
         this.pc += 2;
         this.clock += 8;
     },
@@ -405,7 +405,7 @@ const opCodes = [
         // - - - -
         if (this.flagZ) {
             // jump
-            this.pc += 2 + (this.mmu_get(this.pc + 1) << 24 >> 24);
+            this.pc += 2 + (this.mmu.get(this.pc + 1) << 24 >> 24);
             this.clock += 12;
         } else {
             // don't jump
@@ -429,7 +429,7 @@ const opCodes = [
         // 2A - LD A,(HL+)
         // 1  8
         // - - - -
-        this.a = this.mmu_get(this.hl);
+        this.a = this.mmu.get(this.hl);
         this.hl += 1;
         this.pc += 1;
         this.clock += 8;
@@ -468,7 +468,7 @@ const opCodes = [
         // 2E - LD L,d8
         // 2  8
         // - - - -
-        this.l = this.mmu_get(this.pc + 1);
+        this.l = this.mmu.get(this.pc + 1);
         this.pc += 2;
         this.clock += 8;
     },
@@ -488,7 +488,7 @@ const opCodes = [
         // - - - -
         if (!this.flagC) {
             // jump
-            this.pc += 2 + (this.mmu_get(this.pc + 1) << 24 >> 24);
+            this.pc += 2 + (this.mmu.get(this.pc + 1) << 24 >> 24);
             this.clock += 12;
         } else {
             // don't jump
@@ -500,7 +500,7 @@ const opCodes = [
         // 31 - LD SP,d16
         // 3  12
         // - - - -
-        this.sp = this.mmu_get16(this.pc + 1);
+        this.sp = this.mmu.get16(this.pc + 1);
         this.pc += 3;
         this.clock += 12;
     },
@@ -508,7 +508,7 @@ const opCodes = [
         // 32 - LD (HL-),A
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.a);
+        this.mmu.set(this.hl, this.a);
         this.hl -= 1;
         this.pc += 1;
         this.clock += 8;
@@ -525,11 +525,11 @@ const opCodes = [
         // 34 - INC (HL)
         // 1  12
         // Z 0 H -
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.flagZ = x === 0xff;
         this.flagN = 0;
         this.flagH = (x & 0x0f) === 0x0f;
-        this.mmu_set(this.hl, x + 1);
+        this.mmu.set(this.hl, x + 1);
         this.pc += 1;
         this.clock += 12;
     },
@@ -537,11 +537,11 @@ const opCodes = [
         // 35 - DEC (HL)
         // 1  12
         // Z 1 H -
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.flagZ = x === 0x01;
         this.flagN = 0;
         this.flagH = (x & 0x0f) === 0;
-        this.mmu_set(this.hl, x - 1);
+        this.mmu.set(this.hl, x - 1);
         this.pc += 1;
         this.clock += 12;
     },
@@ -549,7 +549,7 @@ const opCodes = [
         // 36 - LD (HL),d8
         // 2  12
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.pc + 1));
+        this.mmu.set(this.hl, this.mmu.get(this.pc + 1));
         this.pc += 2;
         this.clock += 12;
     },
@@ -569,7 +569,7 @@ const opCodes = [
         // - - - -
         if (this.flagC) {
             // jump
-            this.pc += 2 + (this.mmu_get(this.pc + 1) << 24 >> 24);
+            this.pc += 2 + (this.mmu.get(this.pc + 1) << 24 >> 24);
             this.clock += 12;
         } else {
             // don't jump
@@ -593,7 +593,7 @@ const opCodes = [
         // 3A - LD A,(HL-)
         // 1  8
         // - - - -
-        this.a = this.mmu_get(this.hl);
+        this.a = this.mmu.get(this.hl);
         this.hl -= 1;
         this.pc += 1;
         this.clock += 8;
@@ -632,7 +632,7 @@ const opCodes = [
         // 3E - LD A,d8
         // 2  8
         // - - - -
-        this.a = this.mmu_get(this.pc + 1);
+        this.a = this.mmu.get(this.pc + 1);
         this.pc += 2;
         this.clock += 8;
     },
@@ -695,7 +695,7 @@ const opCodes = [
         // 46 - LD B,(HL)
         // 1  8
         // - - - -
-        this.b = this.mmu_get(this.hl);
+        this.b = this.mmu.get(this.hl);
         this.pc += 1;
         this.clock += 8;
     },
@@ -758,7 +758,7 @@ const opCodes = [
         // 4E - LD C,(HL)
         // 1  8
         // - - - -
-        this.c = this.mmu_get(this.hl);
+        this.c = this.mmu.get(this.hl);
         this.pc += 1;
         this.clock += 8;
     },
@@ -821,7 +821,7 @@ const opCodes = [
         // 56 - LD D,(HL)
         // 1  8
         // - - - -
-        this.d = this.mmu_get(this.hl);
+        this.d = this.mmu.get(this.hl);
         this.pc += 1;
         this.clock += 8;
     },
@@ -884,7 +884,7 @@ const opCodes = [
         // 5E - LD E,(HL)
         // 1  8
         // - - - -
-        this.e = this.mmu_get(this.hl);
+        this.e = this.mmu.get(this.hl);
         this.pc += 1;
         this.clock += 8;
     },
@@ -947,7 +947,7 @@ const opCodes = [
         // 66 - LD H,(HL)
         // 1  8
         // - - - -
-        this.h = this.mmu_get(this.hl);
+        this.h = this.mmu.get(this.hl);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1010,7 +1010,7 @@ const opCodes = [
         // 6E - LD L,(HL)
         // 1  8
         // - - - -
-        this.l = this.mmu_get(this.hl);
+        this.l = this.mmu.get(this.hl);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1026,7 +1026,7 @@ const opCodes = [
         // 70 - LD (HL),B
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.b);
+        this.mmu.set(this.hl, this.b);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1034,7 +1034,7 @@ const opCodes = [
         // 71 - LD (HL),C
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.c);
+        this.mmu.set(this.hl, this.c);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1042,7 +1042,7 @@ const opCodes = [
         // 72 - LD (HL),D
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.d);
+        this.mmu.set(this.hl, this.d);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1050,7 +1050,7 @@ const opCodes = [
         // 73 - LD (HL),E
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.e);
+        this.mmu.set(this.hl, this.e);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1058,7 +1058,7 @@ const opCodes = [
         // 74 - LD (HL),H
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.h);
+        this.mmu.set(this.hl, this.h);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1066,7 +1066,7 @@ const opCodes = [
         // 75 - LD (HL),L
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.l);
+        this.mmu.set(this.hl, this.l);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1083,7 +1083,7 @@ const opCodes = [
         // 77 - LD (HL),A
         // 1  8
         // - - - -
-        this.mmu_set(this.hl, this.a);
+        this.mmu.set(this.hl, this.a);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1139,7 +1139,7 @@ const opCodes = [
         // 7E - LD A,(HL)
         // 1  8
         // - - - -
-        this.a = this.mmu_get(this.hl);
+        this.a = this.mmu.get(this.hl);
         this.pc += 1;
         this.clock += 8;
     },
@@ -1232,7 +1232,7 @@ const opCodes = [
         // 86 - ADD A,(HL)
         // 1  8
         // Z 0 H C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         const r = this.a + x;
         this.flagH = (this.a & 0x0f) + (x & 0x0f) > 0x0f;
         this.flagC = r > 0xff;
@@ -1344,7 +1344,7 @@ const opCodes = [
         // 1  8
         // Z 0 H C
         const cy = this.flagC;
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         const r = this.a + x + cy;
         this.flagH = (this.a & 0x0f) + (x & 0x0f) + cy > 0x0f;
         this.flagC = r > 0xff;
@@ -1450,7 +1450,7 @@ const opCodes = [
         // 96 - SUB (HL)
         // 1  8
         // Z 1 H C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         const r = this.a - x;
         this.flagH = (x & 0x0f) > (this.a & 0x0f);
         this.flagC = r < 0;
@@ -1562,7 +1562,7 @@ const opCodes = [
         // 1  8
         // Z 1 H C
         const cy = this.flagC;
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         const r = this.a - x - cy;
         this.flagH = (x & 0x0f) + cy > (this.a & 0x0f);
         this.flagC = r < 0;
@@ -1596,7 +1596,7 @@ const opCodes = [
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A1 - AND C
@@ -1608,7 +1608,7 @@ const opCodes = [
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A2 - AND D
@@ -1620,7 +1620,7 @@ const opCodes = [
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A3 - AND E
@@ -1632,7 +1632,7 @@ const opCodes = [
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A4 - AND H
@@ -1644,7 +1644,7 @@ const opCodes = [
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A5 - AND L
@@ -1656,19 +1656,19 @@ const opCodes = [
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A6 - AND (HL)
         // 1  8
         // Z 0 1 0
-        this.a &= this.mmu_get(this.hl);
+        this.a &= this.mmu.get(this.hl);
         this.flagZ = this.a === 0;
         this.flagN = 0;
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 8;
+        this.clock += 8;
     },
     function () {
         // A7 - AND A
@@ -1679,7 +1679,7 @@ const opCodes = [
         this.flagH = 1;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A8 - XOR B
@@ -1691,7 +1691,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // A9 - XOR C
@@ -1703,7 +1703,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // AA - XOR D
@@ -1715,7 +1715,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // AB - XOR E
@@ -1727,7 +1727,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // AC - XOR H
@@ -1739,7 +1739,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // AD - XOR L
@@ -1751,19 +1751,19 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // AE - XOR (HL)
         // 1  8
         // Z 0 0 0
-        this.a ^= this.mmu_get(this.hl);
+        this.a ^= this.mmu.get(this.hl);
         this.flagZ = this.a === 0;
         this.flagN = 0;
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 8;
+        this.clock += 8;
     },
     function () {
         // AF - XOR A
@@ -1775,7 +1775,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B0 - OR B
@@ -1787,7 +1787,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B1 - OR C
@@ -1799,7 +1799,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B2 - OR D
@@ -1811,7 +1811,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B3 - OR E
@@ -1823,7 +1823,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B4 - OR H
@@ -1835,7 +1835,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B5 - OR L
@@ -1847,19 +1847,19 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B6 - OR (HL)
         // 1  8
         // Z 0 0 0
-        this.a |= this.mmu_get(this.hl);
+        this.a |= this.mmu.get(this.hl);
         this.flagZ = this.a === 0;
         this.flagN = 0;
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 8;
+        this.clock += 8;
     },
     function () {
         // B7 - OR A
@@ -1870,7 +1870,7 @@ const opCodes = [
         this.flagH = 0;
         this.flagC = 0;
         this.pc += 1;
-        this.clock = 4;
+        this.clock += 4;
     },
     function () {
         // B8 - CP B
@@ -1948,7 +1948,7 @@ const opCodes = [
         // BE - CP (HL)
         // 1  8
         // Z 1 H C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         const r = this.a - x;
         this.flagZ = r === 0;
         this.flagN = 1;
@@ -1974,7 +1974,7 @@ const opCodes = [
         // - - - -
         if (!this.flagZ) {
             // return
-            this.pc = this.mmu_get16(this.sp);
+            this.pc = this.mmu.get16(this.sp);
             this.sp += 2;
             this.clock += 20;
         } else {
@@ -1986,7 +1986,7 @@ const opCodes = [
         // C1 - POP BC
         // 1  12
         // - - - -
-        this.bc = this.mmu_get16(this.sp);
+        this.bc = this.mmu.get16(this.sp);
         this.sp += 2;
         this.pc += 1;
         this.clock += 12;
@@ -1996,7 +1996,7 @@ const opCodes = [
         // 3  16/12
         // - - - -
         if (!this.flagZ) {
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 16;
         } else {
             this.pc += 3;
@@ -2007,7 +2007,7 @@ const opCodes = [
         // C3 - JP a16
         // 3  16
         // - - - -
-        this.pc = this.mmu_get16(this.pc + 1);
+        this.pc = this.mmu.get16(this.pc + 1);
         this.clock += 16;
     },
     function () {
@@ -2016,8 +2016,8 @@ const opCodes = [
         // - - - -
         if (!this.flagZ) {
             this.sp -= 2;
-            this.mmu_set16(this.sp, this.pc + 3);
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.mmu.set16(this.sp, this.pc + 3);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 24;
         } else {
             this.pc += 3;
@@ -2029,7 +2029,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.bc);
+        this.mmu.set16(this.sp, this.bc);
         this.pc += 1;
         this.clock += 16;
     },
@@ -2037,7 +2037,7 @@ const opCodes = [
         // C6 - ADD A,d8
         // 2  8
         // Z 0 H C
-        const x = this.mmu_get(this.pc);
+        const x = this.mmu.get(this.pc);
         const r = this.a + x;
         this.flagN = 0;
         this.flagH = (this.a & 0x0f) + (x & 0x0f) > 0x0f;
@@ -2052,7 +2052,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x00;
         this.clock += 16;
     },
@@ -2062,7 +2062,7 @@ const opCodes = [
         // - - - -
         if (this.flagZ) {
             // return
-            this.pc = this.mmu_get16(this.sp);
+            this.pc = this.mmu.get16(this.sp);
             this.sp += 2;
             this.clock += 20;
         } else {
@@ -2074,7 +2074,7 @@ const opCodes = [
         // C9 - RET
         // 1  16
         // - - - -
-        this.pc = this.mmu_get16(this.sp);
+        this.pc = this.mmu.get16(this.sp);
         this.sp += 2;
         this.clock += 16;
     },
@@ -2083,7 +2083,7 @@ const opCodes = [
         // 3  16/12
         // - - - -
         if (this.flagZ) {
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 16;
         } else {
             this.pc += 3;
@@ -2094,7 +2094,7 @@ const opCodes = [
         // CB - PREFIX CB
         // 2  4
         // - - - -
-        opCodesCB[this.mmu_get(this.pc + 1)].bind(this)();
+        opCodesCB[this.mmu.get(this.pc + 1)].bind(this)();
     },
     function () {
         // CC - CALL Z,a16
@@ -2102,8 +2102,8 @@ const opCodes = [
         // - - - -
         if (this.flagZ) {
             this.sp -= 2;
-            this.mmu_set16(this.sp, this.pc + 3);
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.mmu.set16(this.sp, this.pc + 3);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 24;
         } else {
             this.pc += 3;
@@ -2115,8 +2115,8 @@ const opCodes = [
         // 3  24
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 3);
-        this.pc = this.mmu_get16(this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 3);
+        this.pc = this.mmu.get16(this.pc + 1);
         this.clock += 24;
     },
     function () {
@@ -2124,7 +2124,7 @@ const opCodes = [
         // 2  8
         // Z 0 H C
         const cy = this.flagC;
-        const x = this.mmu_get(this.pc);
+        const x = this.mmu.get(this.pc);
         const r = this.a + x + cy;
         this.flagN = 0;
         this.flagH = (this.a & 0x0f) + (x & 0x0f) + cy > 0x0f;
@@ -2139,7 +2139,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x08;
         this.clock += 16;
     },
@@ -2149,7 +2149,7 @@ const opCodes = [
         // - - - -
         if (!this.flagC) {
             // return
-            this.pc = this.mmu_get16(this.sp);
+            this.pc = this.mmu.get16(this.sp);
             this.sp += 2;
             this.clock += 20;
         } else {
@@ -2161,7 +2161,7 @@ const opCodes = [
         // D1 - POP DE
         // 1  12
         // - - - -
-        this.de = this.mmu_get16(this.sp);
+        this.de = this.mmu.get16(this.sp);
         this.sp += 2;
         this.pc += 1;
         this.clock += 12;
@@ -2171,7 +2171,7 @@ const opCodes = [
         // 3  16/12
         // - - - -
         if (!this.flagC) {
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 16;
         } else {
             this.pc += 3;
@@ -2188,8 +2188,8 @@ const opCodes = [
         // - - - -
         if (!this.flagC) {
             this.sp -= 2;
-            this.mmu_set16(this.sp, this.pc + 3);
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.mmu.set16(this.sp, this.pc + 3);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 24;
         } else {
             this.pc += 3;
@@ -2201,7 +2201,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.de);
+        this.mmu.set16(this.sp, this.de);
         this.pc += 1;
         this.clock += 16;
     },
@@ -2209,7 +2209,7 @@ const opCodes = [
         // D6 - SUB d8
         // 2  8
         // Z 1 H C
-        const x = this.mmu_get(this.pc + 1);
+        const x = this.mmu.get(this.pc + 1);
         const r = this.a - x;
         this.flagH = (x & 0x0f) > (this.a & 0x0f);
         this.flagC = r < 0;
@@ -2224,7 +2224,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x10;
         this.clock += 16;
     },
@@ -2234,7 +2234,7 @@ const opCodes = [
         // - - - -
         if (this.flagC) {
             // return
-            this.pc = this.mmu_get16(this.sp);
+            this.pc = this.mmu.get16(this.sp);
             this.sp += 2;
             this.clock += 20;
         } else {
@@ -2246,7 +2246,7 @@ const opCodes = [
         // D9 - RETI
         // 1  16
         // - - - -
-        this.pc = this.mmu_get16(this.sp);
+        this.pc = this.mmu.get16(this.sp);
         this.interruptMasterEnable = true;
         this.sp += 2;
         this.clock += 16;
@@ -2256,7 +2256,7 @@ const opCodes = [
         // 3  16/12
         // - - - -
         if (this.flagC) {
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 16;
         } else {
             this.pc += 3;
@@ -2273,8 +2273,8 @@ const opCodes = [
         // - - - -
         if (this.flagC) {
             this.sp -= 2;
-            this.mmu_set16(this.sp, this.pc + 3);
-            this.pc = this.mmu_get16(this.pc + 1);
+            this.mmu.set16(this.sp, this.pc + 3);
+            this.pc = this.mmu.get16(this.pc + 1);
             this.clock += 24;
         } else {
             this.pc += 3;
@@ -2290,7 +2290,7 @@ const opCodes = [
         // 2  8
         // Z 1 H C
         const cy = this.flagC;
-        const x = this.mmu_get(this.pc + 1);
+        const x = this.mmu.get(this.pc + 1);
         const r = this.a - x - cy;
         this.flagH = (x & 0x0f) + cy > (this.a & 0x0f);
         this.flagC = r < 0;
@@ -2305,7 +2305,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x18;
         this.clock += 16;
     },
@@ -2313,7 +2313,7 @@ const opCodes = [
         // E0 - LDH (a8),A
         // 2  12
         // - - - -
-        this.mmu_set(0xff00 + this.mmu_get(this.pc + 1), this.a);
+        this.mmu.set(0xff00 + this.mmu.get(this.pc + 1), this.a);
         this.pc += 2;
         this.clock += 12;
     },
@@ -2321,7 +2321,7 @@ const opCodes = [
         // E1 - POP HL
         // 1  12
         // - - - -
-        this.hl = this.mmu_get16(this.sp);
+        this.hl = this.mmu.get16(this.sp);
         this.sp += 2;
         this.pc += 1;
         this.clock += 12;
@@ -2330,7 +2330,7 @@ const opCodes = [
         // E2 - LD (C),A
         // 1  8
         // - - - -
-        this.mmu_set(0xff00 + this.c, this.a);
+        this.mmu.set(0xff00 + this.c, this.a);
         this.pc += 1;
         this.clock += 8;
     },
@@ -2347,7 +2347,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.hl);
+        this.mmu.set16(this.sp, this.hl);
         this.pc += 1;
         this.clock += 16;
     },
@@ -2355,7 +2355,7 @@ const opCodes = [
         // E6 - AND d8
         // 2  8
         // Z 0 1 0
-        this.a &= this.mmu_get(this.pc + 1);
+        this.a &= this.mmu.get(this.pc + 1);
         this.flagZ = this.a === 0;
         this.flagN = 0;
         this.flagH = 1;
@@ -2368,7 +2368,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x20;
         this.clock += 16;
     },
@@ -2376,7 +2376,7 @@ const opCodes = [
         // E8 - ADD SP,r8
         // 2  16
         // 0 0 H C
-        const x = (this.mmu_get(this.pc + 1) << 24 >> 24)
+        const x = (this.mmu.get(this.pc + 1) << 24 >> 24)
         // TODO Find out if flagH should be set when r8 is negative and addition produces a borrow
         this.flagH = (this.sp & 0x0fff) + x > 0x0fff;
         const r = this.sp + x;
@@ -2399,7 +2399,7 @@ const opCodes = [
         // EA - LD (a16),A
         // 3  16
         // - - - -
-        this.mmu_set(this.mmu_get16(this.pc + 1), this.a);
+        this.mmu.set(this.mmu.get16(this.pc + 1), this.a);
         this.pc += 3;
         this.clock += 16;
     },
@@ -2419,7 +2419,7 @@ const opCodes = [
         // EE - XOR d8
         // 2  8
         // Z 0 0 0
-        this.a ^= this.mmu_get(this.pc + 1);
+        this.a ^= this.mmu.get(this.pc + 1);
         this.flagZ = this.a === 0;
         this.flagN = 0;
         this.flagH = 0;
@@ -2432,7 +2432,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x28;
         this.clock += 16;
     },
@@ -2440,7 +2440,7 @@ const opCodes = [
         // F0 - LDH A,(a8)
         // 2  12
         // - - - -
-        this.a = this.mmu_get(0xff00 + this.mmu_get(this.pc + 1));
+        this.a = this.mmu.get(0xff00 + this.mmu.get(this.pc + 1));
         this.pc += 2;
         this.clock += 12;
     },
@@ -2448,7 +2448,7 @@ const opCodes = [
         // F1 - POP AF
         // 1  12
         // Z N H C
-        this.af = this.mmu_get16(this.sp);
+        this.af = this.mmu.get16(this.sp);
         this.sp += 2;
         this.pc += 1;
         this.clock += 12;
@@ -2457,7 +2457,7 @@ const opCodes = [
         // F2 - LD A,(C)
         // 1  8
         // - - - -
-        this.a = this.mmu_get(0xff00 + this.c);
+        this.a = this.mmu.get(0xff00 + this.c);
         this.pc += 1;
         this.clock += 8;
     },
@@ -2478,7 +2478,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.af);
+        this.mmu.set16(this.sp, this.af);
         this.pc += 1;
         this.clock += 16;
     },
@@ -2486,7 +2486,7 @@ const opCodes = [
         // F6 - OR d8
         // 2  8
         // Z 0 0 0
-        this.a |= this.mmu_get(this.pc + 1);
+        this.a |= this.mmu.get(this.pc + 1);
         this.flagZ = this.a === 0;
         this.flagN = 0;
         this.flagH = 0;
@@ -2499,7 +2499,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x30;
         this.clock += 16;
     },
@@ -2507,8 +2507,8 @@ const opCodes = [
         // F8 - LD HL,SP+r8
         // 2  12
         // 0 0 H C
-        const x = this.mmu_get(this.pc + 1) << 24 >> 24;
-        this.hl = this.mmu_get16(this.sp + x);
+        const x = this.mmu.get(this.pc + 1) << 24 >> 24;
+        this.hl = this.mmu.get16(this.sp + x);
         this.flagZ = 0;
         this.flagN = 0;
         this.flagH = (this.sp & 0x0fff) + x > 0x0fff;
@@ -2528,7 +2528,7 @@ const opCodes = [
         // FA - LD A,(a16)
         // 3  16
         // - - - -
-        this.a = this.mmu_get(this.mmu_get16(this.pc + 1));
+        this.a = this.mmu.get(this.mmu.get16(this.pc + 1));
         this.pc += 3;
         this.clock += 16;
     },
@@ -2552,7 +2552,7 @@ const opCodes = [
         // FE - CP d8
         // 2  8
         // Z 1 H C
-        const x = this.mmu_get(this.pc + 1);
+        const x = this.mmu.get(this.pc + 1);
         const r = this.a - x;
         this.flagZ = r === 0;
         this.flagN = 1;
@@ -2566,7 +2566,7 @@ const opCodes = [
         // 1  16
         // - - - -
         this.sp -= 2;
-        this.mmu_set16(this.sp, this.pc + 1);
+        this.mmu.set16(this.sp, this.pc + 1);
         this.pc = 0x38;
         this.clock += 16;
     },
@@ -2649,9 +2649,9 @@ const opCodesCB = [
         // 06 - RLC (HL)
         // 2  16
         // Z 0 0 C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.flagC = x & 0x80;
-        this.mmu_set(this.hl, (x << 1) | (x >> 7));
+        this.mmu.set(this.hl, (x << 1) | (x >> 7));
         this.flagZ = x === 0;
         this.flagN = 0;
         this.flagH = 0;
@@ -2746,9 +2746,9 @@ const opCodesCB = [
         // 0E - RRC (HL)
         // 2  16
         // Z 0 0 C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.flagC = x & 0x01;
-        this.mmu_set(this.hl, (x >> 1) | (x << 7));
+        this.mmu.set(this.hl, (x >> 1) | (x << 7));
         this.flagZ = x === 0;
         this.flagN = 0;
         this.flagH = 0;
@@ -2849,9 +2849,9 @@ const opCodesCB = [
         // 16 - RL (HL)
         // 2  16
         // Z 0 0 C
-        const r = (this.mmu_get(this.hl) << 1) | this.flagC;
+        const r = (this.mmu.get(this.hl) << 1) | this.flagC;
         this.flagC = r & 0x100;
-        this.mmu_set(this.hl, r);
+        this.mmu.set(this.hl, r);
         this.flagZ = (r & 0xff) === 0;
         this.flagN = 0;
         this.flagH = 0;
@@ -2953,11 +2953,11 @@ const opCodesCB = [
         // 1E - RR (HL)
         // 2  16
         // Z 0 0 C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         const d0 = x & 0x01;
         const r = (x >> 1) | (this.flagC << 7);
-        this.mmu_set(this.hl, r);
-        this.flagZ = x & 0xff === 0;
+        this.mmu.set(this.hl, r);
+        this.flagZ = (x & 0xff) === 0;
         this.flagN = 0;
         this.flagH = 0;
         this.flagC = d0;
@@ -3053,10 +3053,10 @@ const opCodesCB = [
         // 26 - SLA (HL)
         // 2  16
         // Z 0 0 C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.flagC = x & 0x80;
-        this.mmu_set(this.hl, x << 1);
-        this.flagZ = x & 0x7f === 0;
+        this.mmu.set(this.hl, x << 1);
+        this.flagZ = (x & 0x7f) === 0;
         this.flagN = 0;
         this.flagH = 0;
         this.pc += 2;
@@ -3150,9 +3150,9 @@ const opCodesCB = [
         // 2E - SRA (HL)
         // 2  16
         // Z 0 0 C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.flagC = x & 0x01;
-        this.mmu_set(this.hl, (x >> 1) | (x & 0x80));
+        this.mmu.set(this.hl, (x >> 1) | (x & 0x80));
         this.flagZ = (x >> 1) === 0;
         this.flagN = 0;
         this.flagH = 0;
@@ -3247,7 +3247,7 @@ const opCodesCB = [
         // 36 - SWAP (HL)
         // 2  16
         // Z 0 0 0
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.set(this.hl, (x << 4) | (x >> 4));
         this.flagZ = x === 0;
         this.flagN = 0;
@@ -3344,9 +3344,9 @@ const opCodesCB = [
         // 3E - SRL (HL)
         // 2  16
         // Z 0 0 C
-        const x = this.mmu_get(this.hl);
+        const x = this.mmu.get(this.hl);
         this.flagC = x & 0x01;
-        this.mmu_set(this.hl, x >> 1);
+        this.mmu.set(this.hl, x >> 1);
         this.flagZ = (x >> 1) === 0;
         this.flagN = 0;
         this.flagH = 0;
@@ -3429,7 +3429,7 @@ const opCodesCB = [
         // 46 - BIT 0,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x01);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x01);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -3509,7 +3509,7 @@ const opCodesCB = [
         // 4E - BIT 1,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x02);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x02);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -3589,7 +3589,7 @@ const opCodesCB = [
         // 56 - BIT 2,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x04);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x04);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -3669,7 +3669,7 @@ const opCodesCB = [
         // 5E - BIT 3,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x08);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x08);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -3749,7 +3749,7 @@ const opCodesCB = [
         // 66 - BIT 4,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x10);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x10);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -3829,7 +3829,7 @@ const opCodesCB = [
         // 6E - BIT 5,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x20);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x20);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -3909,7 +3909,7 @@ const opCodesCB = [
         // 76 - BIT 6,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x40);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x40);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -3989,7 +3989,7 @@ const opCodesCB = [
         // 7E - BIT 7,(HL)
         // 2  16
         // Z 0 1 -
-        this.flagZ = !(this.mmu_get(this.hl) & 0x80);
+        this.flagZ = !(this.mmu.get(this.hl) & 0x80);
         this.flagN = 0;
         this.flagH = 1;
         this.pc += 2;
@@ -4057,7 +4057,7 @@ const opCodesCB = [
         // 86 - RES 0,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0xfe);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0xfe);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4121,7 +4121,7 @@ const opCodesCB = [
         // 8E - RES 1,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0xfd);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0xfd);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4185,7 +4185,7 @@ const opCodesCB = [
         // 96 - RES 2,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0xfb);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0xfb);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4249,7 +4249,7 @@ const opCodesCB = [
         // 9E - RES 3,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0xf7);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0xf7);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4313,7 +4313,7 @@ const opCodesCB = [
         // A6 - RES 4,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0xef);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0xef);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4377,7 +4377,7 @@ const opCodesCB = [
         // AE - RES 5,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0xdf);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0xdf);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4441,7 +4441,7 @@ const opCodesCB = [
         // B6 - RES 6,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0xbf);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0xbf);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4505,7 +4505,7 @@ const opCodesCB = [
         // BE - RES 7,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) & 0x7f);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) & 0x7f);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4569,7 +4569,7 @@ const opCodesCB = [
         // C6 - SET 0,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x01);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x01);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4633,7 +4633,7 @@ const opCodesCB = [
         // CE - SET 1,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x02);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x02);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4697,7 +4697,7 @@ const opCodesCB = [
         // D6 - SET 2,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x04);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x04);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4761,7 +4761,7 @@ const opCodesCB = [
         // DE - SET 3,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x08);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x08);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4825,7 +4825,7 @@ const opCodesCB = [
         // E6 - SET 4,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x10);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x10);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4889,7 +4889,7 @@ const opCodesCB = [
         // EE - SET 5,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x20);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x20);
         this.pc += 2;
         this.clock += 16;
     },
@@ -4953,7 +4953,7 @@ const opCodesCB = [
         // F6 - SET 6,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x40);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x40);
         this.pc += 2;
         this.clock += 16;
     },
@@ -5017,7 +5017,7 @@ const opCodesCB = [
         // FE - SET 7,(HL)
         // 2  16
         // - - - -
-        this.mmu_set(this.hl, this.mmu_get(this.hl) | 0x80);
+        this.mmu.set(this.hl, this.mmu.get(this.hl) | 0x80);
         this.pc += 2;
         this.clock += 16;
     },
@@ -5031,5 +5031,13 @@ const opCodesCB = [
     },
 ];
 
-asmCode = [["NOP", "1  4", "- - - -"],["LD BC,d16", "3  12", "- - - -"],["LD (BC),A", "1  8", "- - - -"],["INC BC", "1  8", "- - - -"],["INC B", "1  4", "Z 0 H -"],["DEC B", "1  4", "Z 1 H -"],["LD B,d8", "2  8", "- - - -"],["RLCA", "1  4", "0 0 0 C"],["LD (a16),SP", "3  20", "- - - -"],["ADD HL,BC", "1  8", "- 0 H C"],["LD A,(BC)", "1  8", "- - - -"],["DEC BC", "1  8", "- - - -"],["INC C", "1  4", "Z 0 H -"],["DEC C", "1  4", "Z 1 H -"],["LD C,d8", "2  8", "- - - -"],["RRCA", "1  4", "0 0 0 C"],["STOP 0", "2  4", "- - - -"],["LD DE,d16", "3  12", "- - - -"],["LD (DE),A", "1  8", "- - - -"],["INC DE", "1  8", "- - - -"],["INC D", "1  4", "Z 0 H -"],["DEC D", "1  4", "Z 1 H -"],["LD D,d8", "2  8", "- - - -"],["RLA", "1  4", "0 0 0 C"],["JR r8", "2  12", "- - - -"],["ADD HL,DE", "1  8", "- 0 H C"],["LD A,(DE)", "1  8", "- - - -"],["DEC DE", "1  8", "- - - -"],["INC E", "1  4", "Z 0 H -"],["DEC E", "1  4", "Z 1 H -"],["LD E,d8", "2  8", "- - - -"],["RRA", "1  4", "0 0 0 C"],["JR NZ,r8", "2  12/8", "- - - -"],["LD HL,d16", "3  12", "- - - -"],["LD (HL+),A", "1  8", "- - - -"],["INC HL", "1  8", "- - - -"],["INC H", "1  4", "Z 0 H -"],["DEC H", "1  4", "Z 1 H -"],["LD H,d8", "2  8", "- - - -"],["DAA", "1  4", "Z - 0 C"],["JR Z,r8", "2  12/8", "- - - -"],["ADD HL,HL", "1  8", "- 0 H C"],["LD A,(HL+)", "1  8", "- - - -"],["DEC HL", "1  8", "- - - -"],["INC L", "1  4", "Z 0 H -"],["DEC L", "1  4", "Z 1 H -"],["LD L,d8", "2  8", "- - - -"],["CPL", "1  4", "- 1 1 -"],["JR NC,r8", "2  12/8", "- - - -"],["LD SP,d16", "3  12", "- - - -"],["LD (HL-),A", "1  8", "- - - -"],["INC SP", "1  8", "- - - -"],["INC (HL)", "1  12", "Z 0 H -"],["DEC (HL)", "1  12", "Z 1 H -"],["LD (HL),d8", "2  12", "- - - -"],["SCF", "1  4", "- 0 0 1"],["JR C,r8", "2  12/8", "- - - -"],["ADD HL,SP", "1  8", "- 0 H C"],["LD A,(HL-)", "1  8", "- - - -"],["DEC SP", "1  8", "- - - -"],["INC A", "1  4", "Z 0 H -"],["DEC A", "1  4", "Z 1 H -"],["LD A,d8", "2  8", "- - - -"],["CCF", "1  4", "- 0 0 C"],["LD B,B", "1  4", "- - - -"],["LD B,C", "1  4", "- - - -"],["LD B,D", "1  4", "- - - -"],["LD B,E", "1  4", "- - - -"],["LD B,H", "1  4", "- - - -"],["LD B,L", "1  4", "- - - -"],["LD B,(HL)", "1  8", "- - - -"],["LD B,A", "1  4", "- - - -"],["LD C,B", "1  4", "- - - -"],["LD C,C", "1  4", "- - - -"],["LD C,D", "1  4", "- - - -"],["LD C,E", "1  4", "- - - -"],["LD C,H", "1  4", "- - - -"],["LD C,L", "1  4", "- - - -"],["LD C,(HL)", "1  8", "- - - -"],["LD C,A", "1  4", "- - - -"],["LD D,B", "1  4", "- - - -"],["LD D,C", "1  4", "- - - -"],["LD D,D", "1  4", "- - - -"],["LD D,E", "1  4", "- - - -"],["LD D,H", "1  4", "- - - -"],["LD D,L", "1  4", "- - - -"],["LD D,(HL)", "1  8", "- - - -"],["LD D,A", "1  4", "- - - -"],["LD E,B", "1  4", "- - - -"],["LD E,C", "1  4", "- - - -"],["LD E,D", "1  4", "- - - -"],["LD E,E", "1  4", "- - - -"],["LD E,H", "1  4", "- - - -"],["LD E,L", "1  4", "- - - -"],["LD E,(HL)", "1  8", "- - - -"],["LD E,A", "1  4", "- - - -"],["LD H,B", "1  4", "- - - -"],["LD H,C", "1  4", "- - - -"],["LD H,D", "1  4", "- - - -"],["LD H,E", "1  4", "- - - -"],["LD H,H", "1  4", "- - - -"],["LD H,L", "1  4", "- - - -"],["LD H,(HL)", "1  8", "- - - -"],["LD H,A", "1  4", "- - - -"],["LD L,B", "1  4", "- - - -"],["LD L,C", "1  4", "- - - -"],["LD L,D", "1  4", "- - - -"],["LD L,E", "1  4", "- - - -"],["LD L,H", "1  4", "- - - -"],["LD L,L", "1  4", "- - - -"],["LD L,(HL)", "1  8", "- - - -"],["LD L,A", "1  4", "- - - -"],["LD (HL),B", "1  8", "- - - -"],["LD (HL),C", "1  8", "- - - -"],["LD (HL),D", "1  8", "- - - -"],["LD (HL),E", "1  8", "- - - -"],["LD (HL),H", "1  8", "- - - -"],["LD (HL),L", "1  8", "- - - -"],["HALT", "1  4", "- - - -"],["LD (HL),A", "1  8", "- - - -"],["LD A,B", "1  4", "- - - -"],["LD A,C", "1  4", "- - - -"],["LD A,D", "1  4", "- - - -"],["LD A,E", "1  4", "- - - -"],["LD A,H", "1  4", "- - - -"],["LD A,L", "1  4", "- - - -"],["LD A,(HL)", "1  8", "- - - -"],["LD A,A", "1  4", "- - - -"],["ADD A,B", "1  4", "Z 0 H C"],["ADD A,C", "1  4", "Z 0 H C"],["ADD A,D", "1  4", "Z 0 H C"],["ADD A,E", "1  4", "Z 0 H C"],["ADD A,H", "1  4", "Z 0 H C"],["ADD A,L", "1  4", "Z 0 H C"],["ADD A,(HL)", "1  8", "Z 0 H C"],["ADD A,A", "1  4", "Z 0 H C"],["ADC A,B", "1  4", "Z 0 H C"],["ADC A,C", "1  4", "Z 0 H C"],["ADC A,D", "1  4", "Z 0 H C"],["ADC A,E", "1  4", "Z 0 H C"],["ADC A,H", "1  4", "Z 0 H C"],["ADC A,L", "1  4", "Z 0 H C"],["ADC A,(HL)", "1  8", "Z 0 H C"],["ADC A,A", "1  4", "Z 0 H C"],["SUB B", "1  4", "Z 1 H C"],["SUB C", "1  4", "Z 1 H C"],["SUB D", "1  4", "Z 1 H C"],["SUB E", "1  4", "Z 1 H C"],["SUB H", "1  4", "Z 1 H C"],["SUB L", "1  4", "Z 1 H C"],["SUB (HL)", "1  8", "Z 1 H C"],["SUB A", "1  4", "Z 1 H C"],["SBC A,B", "1  4", "Z 1 H C"],["SBC A,C", "1  4", "Z 1 H C"],["SBC A,D", "1  4", "Z 1 H C"],["SBC A,E", "1  4", "Z 1 H C"],["SBC A,H", "1  4", "Z 1 H C"],["SBC A,L", "1  4", "Z 1 H C"],["SBC A,(HL)", "1  8", "Z 1 H C"],["SBC A,A", "1  4", "Z 1 H C"],["AND B", "1  4", "Z 0 1 0"],["AND C", "1  4", "Z 0 1 0"],["AND D", "1  4", "Z 0 1 0"],["AND E", "1  4", "Z 0 1 0"],["AND H", "1  4", "Z 0 1 0"],["AND L", "1  4", "Z 0 1 0"],["AND (HL)", "1  8", "Z 0 1 0"],["AND A", "1  4", "Z 0 1 0"],["XOR B", "1  4", "Z 0 0 0"],["XOR C", "1  4", "Z 0 0 0"],["XOR D", "1  4", "Z 0 0 0"],["XOR E", "1  4", "Z 0 0 0"],["XOR H", "1  4", "Z 0 0 0"],["XOR L", "1  4", "Z 0 0 0"],["XOR (HL)", "1  8", "Z 0 0 0"],["XOR A", "1  4", "Z 0 0 0"],["OR B", "1  4", "Z 0 0 0"],["OR C", "1  4", "Z 0 0 0"],["OR D", "1  4", "Z 0 0 0"],["OR E", "1  4", "Z 0 0 0"],["OR H", "1  4", "Z 0 0 0"],["OR L", "1  4", "Z 0 0 0"],["OR (HL)", "1  8", "Z 0 0 0"],["OR A", "1  4", "Z 0 0 0"],["CP B", "1  4", "Z 1 H C"],["CP C", "1  4", "Z 1 H C"],["CP D", "1  4", "Z 1 H C"],["CP E", "1  4", "Z 1 H C"],["CP H", "1  4", "Z 1 H C"],["CP L", "1  4", "Z 1 H C"],["CP (HL)", "1  8", "Z 1 H C"],["CP A", "1  4", "Z 1 H C"],["RET NZ", "1  20/8", "- - - -"],["POP BC", "1  12", "- - - -"],["JP NZ,a16", "3  16/12", "- - - -"],["JP a16", "3  16", "- - - -"],["CALL NZ,a16", "3  24/12", "- - - -"],["PUSH BC", "1  16", "- - - -"],["ADD A,d8", "2  8", "Z 0 H C"],["RST 00H", "1  16", "- - - -"],["RET Z", "1  20/8", "- - - -"],["RET", "1  16", "- - - -"],["JP Z,a16", "3  16/12", "- - - -"],["PREFIX CB", "1  4", "- - - -"],["CALL Z,a16", "3  24/12", "- - - -"],["CALL a16", "3  24", "- - - -"],["ADC A,d8", "2  8", "Z 0 H C"],["RST 08H", "1  16", "- - - -"],["RET NC", "1  20/8", "- - - -"],["POP DE", "1  12", "- - - -"],["JP NC,a16", "3  16/12", "- - - -"],["", "", ""],["CALL NC,a16", "3  24/12", "- - - -"],["PUSH DE", "1  16", "- - - -"],["SUB d8", "2  8", "Z 1 H C"],["RST 10H", "1  16", "- - - -"],["RET C", "1  20/8", "- - - -"],["RETI", "1  16", "- - - -"],["JP C,a16", "3  16/12", "- - - -"],["", "", ""],["CALL C,a16", "3  24/12", "- - - -"],["", "", ""],["SBC A,d8", "2  8", "Z 1 H C"],["RST 18H", "1  16", "- - - -"],["LDH (a8),A", "2  12", "- - - -"],["POP HL", "1  12", "- - - -"],["LD (C),A", "1  8", "- - - -"],["", "", ""],["", "", ""],["PUSH HL", "1  16", "- - - -"],["AND d8", "2  8", "Z 0 1 0"],["RST 20H", "1  16", "- - - -"],["ADD SP,r8", "2  16", "0 0 H C"],["JP (HL)", "1  4", "- - - -"],["LD (a16),A", "3  16", "- - - -"],["", "", ""],["", "", ""],["", "", ""],["XOR d8", "2  8", "Z 0 0 0"],["RST 28H", "1  16", "- - - -"],["LDH A,(a8)", "2  12", "- - - -"],["POP AF", "1  12", "Z N H C"],["LD A,(C)", "1  8", "- - - -"],["DI", "1  4", "- - - -"],["", "", ""],["PUSH AF", "1  16", "- - - -"],["OR d8", "2  8", "Z 0 0 0"],["RST 30H", "1  16", "- - - -"],["LD HL,SP+r8", "2  12", "0 0 H C"],["LD SP,HL", "1  8", "- - - -"],["LD A,(a16)", "3  16", "- - - -"],["EI", "1  4", "- - - -"],["", "", ""],["", "", ""],["CP d8", "2  8", "Z 1 H C"],["RST 38H", "1  16", "- - - -"],];
-asmCodeCB = [["RLC B", "2  8", "Z 0 0 C"],["RLC C", "2  8", "Z 0 0 C"],["RLC D", "2  8", "Z 0 0 C"],["RLC E", "2  8", "Z 0 0 C"],["RLC H", "2  8", "Z 0 0 C"],["RLC L", "2  8", "Z 0 0 C"],["RLC (HL)", "2  16", "Z 0 0 C"],["RLC A", "2  8", "Z 0 0 C"],["RRC B", "2  8", "Z 0 0 C"],["RRC C", "2  8", "Z 0 0 C"],["RRC D", "2  8", "Z 0 0 C"],["RRC E", "2  8", "Z 0 0 C"],["RRC H", "2  8", "Z 0 0 C"],["RRC L", "2  8", "Z 0 0 C"],["RRC (HL)", "2  16", "Z 0 0 C"],["RRC A", "2  8", "Z 0 0 C"],["RL B", "2  8", "Z 0 0 C"],["RL C", "2  8", "Z 0 0 C"],["RL D", "2  8", "Z 0 0 C"],["RL E", "2  8", "Z 0 0 C"],["RL H", "2  8", "Z 0 0 C"],["RL L", "2  8", "Z 0 0 C"],["RL (HL)", "2  16", "Z 0 0 C"],["RL A", "2  8", "Z 0 0 C"],["RR B", "2  8", "Z 0 0 C"],["RR C", "2  8", "Z 0 0 C"],["RR D", "2  8", "Z 0 0 C"],["RR E", "2  8", "Z 0 0 C"],["RR H", "2  8", "Z 0 0 C"],["RR L", "2  8", "Z 0 0 C"],["RR (HL)", "2  16", "Z 0 0 C"],["RR A", "2  8", "Z 0 0 C"],["SLA B", "2  8", "Z 0 0 C"],["SLA C", "2  8", "Z 0 0 C"],["SLA D", "2  8", "Z 0 0 C"],["SLA E", "2  8", "Z 0 0 C"],["SLA H", "2  8", "Z 0 0 C"],["SLA L", "2  8", "Z 0 0 C"],["SLA (HL)", "2  16", "Z 0 0 C"],["SLA A", "2  8", "Z 0 0 C"],["SRA B", "2  8", "Z 0 0 0"],["SRA C", "2  8", "Z 0 0 0"],["SRA D", "2  8", "Z 0 0 0"],["SRA E", "2  8", "Z 0 0 0"],["SRA H", "2  8", "Z 0 0 0"],["SRA L", "2  8", "Z 0 0 0"],["SRA (HL)", "2  16", "Z 0 0 0"],["SRA A", "2  8", "Z 0 0 0"],["SWAP B", "2  8", "Z 0 0 0"],["SWAP C", "2  8", "Z 0 0 0"],["SWAP D", "2  8", "Z 0 0 0"],["SWAP E", "2  8", "Z 0 0 0"],["SWAP H", "2  8", "Z 0 0 0"],["SWAP L", "2  8", "Z 0 0 0"],["SWAP (HL)", "2  16", "Z 0 0 0"],["SWAP A", "2  8", "Z 0 0 0"],["SRL B", "2  8", "Z 0 0 C"],["SRL C", "2  8", "Z 0 0 C"],["SRL D", "2  8", "Z 0 0 C"],["SRL E", "2  8", "Z 0 0 C"],["SRL H", "2  8", "Z 0 0 C"],["SRL L", "2  8", "Z 0 0 C"],["SRL (HL)", "2  16", "Z 0 0 C"],["SRL A", "2  8", "Z 0 0 C"],["BIT 0,B", "2  8", "Z 0 1 -"],["BIT 0,C", "2  8", "Z 0 1 -"],["BIT 0,D", "2  8", "Z 0 1 -"],["BIT 0,E", "2  8", "Z 0 1 -"],["BIT 0,H", "2  8", "Z 0 1 -"],["BIT 0,L", "2  8", "Z 0 1 -"],["BIT 0,(HL)", "2  16", "Z 0 1 -"],["BIT 0,A", "2  8", "Z 0 1 -"],["BIT 1,B", "2  8", "Z 0 1 -"],["BIT 1,C", "2  8", "Z 0 1 -"],["BIT 1,D", "2  8", "Z 0 1 -"],["BIT 1,E", "2  8", "Z 0 1 -"],["BIT 1,H", "2  8", "Z 0 1 -"],["BIT 1,L", "2  8", "Z 0 1 -"],["BIT 1,(HL)", "2  16", "Z 0 1 -"],["BIT 1,A", "2  8", "Z 0 1 -"],["BIT 2,B", "2  8", "Z 0 1 -"],["BIT 2,C", "2  8", "Z 0 1 -"],["BIT 2,D", "2  8", "Z 0 1 -"],["BIT 2,E", "2  8", "Z 0 1 -"],["BIT 2,H", "2  8", "Z 0 1 -"],["BIT 2,L", "2  8", "Z 0 1 -"],["BIT 2,(HL)", "2  16", "Z 0 1 -"],["BIT 2,A", "2  8", "Z 0 1 -"],["BIT 3,B", "2  8", "Z 0 1 -"],["BIT 3,C", "2  8", "Z 0 1 -"],["BIT 3,D", "2  8", "Z 0 1 -"],["BIT 3,E", "2  8", "Z 0 1 -"],["BIT 3,H", "2  8", "Z 0 1 -"],["BIT 3,L", "2  8", "Z 0 1 -"],["BIT 3,(HL)", "2  16", "Z 0 1 -"],["BIT 3,A", "2  8", "Z 0 1 -"],["BIT 4,B", "2  8", "Z 0 1 -"],["BIT 4,C", "2  8", "Z 0 1 -"],["BIT 4,D", "2  8", "Z 0 1 -"],["BIT 4,E", "2  8", "Z 0 1 -"],["BIT 4,H", "2  8", "Z 0 1 -"],["BIT 4,L", "2  8", "Z 0 1 -"],["BIT 4,(HL)", "2  16", "Z 0 1 -"],["BIT 4,A", "2  8", "Z 0 1 -"],["BIT 5,B", "2  8", "Z 0 1 -"],["BIT 5,C", "2  8", "Z 0 1 -"],["BIT 5,D", "2  8", "Z 0 1 -"],["BIT 5,E", "2  8", "Z 0 1 -"],["BIT 5,H", "2  8", "Z 0 1 -"],["BIT 5,L", "2  8", "Z 0 1 -"],["BIT 5,(HL)", "2  16", "Z 0 1 -"],["BIT 5,A", "2  8", "Z 0 1 -"],["BIT 6,B", "2  8", "Z 0 1 -"],["BIT 6,C", "2  8", "Z 0 1 -"],["BIT 6,D", "2  8", "Z 0 1 -"],["BIT 6,E", "2  8", "Z 0 1 -"],["BIT 6,H", "2  8", "Z 0 1 -"],["BIT 6,L", "2  8", "Z 0 1 -"],["BIT 6,(HL)", "2  16", "Z 0 1 -"],["BIT 6,A", "2  8", "Z 0 1 -"],["BIT 7,B", "2  8", "Z 0 1 -"],["BIT 7,C", "2  8", "Z 0 1 -"],["BIT 7,D", "2  8", "Z 0 1 -"],["BIT 7,E", "2  8", "Z 0 1 -"],["BIT 7,H", "2  8", "Z 0 1 -"],["BIT 7,L", "2  8", "Z 0 1 -"],["BIT 7,(HL)", "2  16", "Z 0 1 -"],["BIT 7,A", "2  8", "Z 0 1 -"],["RES 0,B", "2  8", "- - - -"],["RES 0,C", "2  8", "- - - -"],["RES 0,D", "2  8", "- - - -"],["RES 0,E", "2  8", "- - - -"],["RES 0,H", "2  8", "- - - -"],["RES 0,L", "2  8", "- - - -"],["RES 0,(HL)", "2  16", "- - - -"],["RES 0,A", "2  8", "- - - -"],["RES 1,B", "2  8", "- - - -"],["RES 1,C", "2  8", "- - - -"],["RES 1,D", "2  8", "- - - -"],["RES 1,E", "2  8", "- - - -"],["RES 1,H", "2  8", "- - - -"],["RES 1,L", "2  8", "- - - -"],["RES 1,(HL)", "2  16", "- - - -"],["RES 1,A", "2  8", "- - - -"],["RES 2,B", "2  8", "- - - -"],["RES 2,C", "2  8", "- - - -"],["RES 2,D", "2  8", "- - - -"],["RES 2,E", "2  8", "- - - -"],["RES 2,H", "2  8", "- - - -"],["RES 2,L", "2  8", "- - - -"],["RES 2,(HL)", "2  16", "- - - -"],["RES 2,A", "2  8", "- - - -"],["RES 3,B", "2  8", "- - - -"],["RES 3,C", "2  8", "- - - -"],["RES 3,D", "2  8", "- - - -"],["RES 3,E", "2  8", "- - - -"],["RES 3,H", "2  8", "- - - -"],["RES 3,L", "2  8", "- - - -"],["RES 3,(HL)", "2  16", "- - - -"],["RES 3,A", "2  8", "- - - -"],["RES 4,B", "2  8", "- - - -"],["RES 4,C", "2  8", "- - - -"],["RES 4,D", "2  8", "- - - -"],["RES 4,E", "2  8", "- - - -"],["RES 4,H", "2  8", "- - - -"],["RES 4,L", "2  8", "- - - -"],["RES 4,(HL)", "2  16", "- - - -"],["RES 4,A", "2  8", "- - - -"],["RES 5,B", "2  8", "- - - -"],["RES 5,C", "2  8", "- - - -"],["RES 5,D", "2  8", "- - - -"],["RES 5,E", "2  8", "- - - -"],["RES 5,H", "2  8", "- - - -"],["RES 5,L", "2  8", "- - - -"],["RES 5,(HL)", "2  16", "- - - -"],["RES 5,A", "2  8", "- - - -"],["RES 6,B", "2  8", "- - - -"],["RES 6,C", "2  8", "- - - -"],["RES 6,D", "2  8", "- - - -"],["RES 6,E", "2  8", "- - - -"],["RES 6,H", "2  8", "- - - -"],["RES 6,L", "2  8", "- - - -"],["RES 6,(HL)", "2  16", "- - - -"],["RES 6,A", "2  8", "- - - -"],["RES 7,B", "2  8", "- - - -"],["RES 7,C", "2  8", "- - - -"],["RES 7,D", "2  8", "- - - -"],["RES 7,E", "2  8", "- - - -"],["RES 7,H", "2  8", "- - - -"],["RES 7,L", "2  8", "- - - -"],["RES 7,(HL)", "2  16", "- - - -"],["RES 7,A", "2  8", "- - - -"],["SET 0,B", "2  8", "- - - -"],["SET 0,C", "2  8", "- - - -"],["SET 0,D", "2  8", "- - - -"],["SET 0,E", "2  8", "- - - -"],["SET 0,H", "2  8", "- - - -"],["SET 0,L", "2  8", "- - - -"],["SET 0,(HL)", "2  16", "- - - -"],["SET 0,A", "2  8", "- - - -"],["SET 1,B", "2  8", "- - - -"],["SET 1,C", "2  8", "- - - -"],["SET 1,D", "2  8", "- - - -"],["SET 1,E", "2  8", "- - - -"],["SET 1,H", "2  8", "- - - -"],["SET 1,L", "2  8", "- - - -"],["SET 1,(HL)", "2  16", "- - - -"],["SET 1,A", "2  8", "- - - -"],["SET 2,B", "2  8", "- - - -"],["SET 2,C", "2  8", "- - - -"],["SET 2,D", "2  8", "- - - -"],["SET 2,E", "2  8", "- - - -"],["SET 2,H", "2  8", "- - - -"],["SET 2,L", "2  8", "- - - -"],["SET 2,(HL)", "2  16", "- - - -"],["SET 2,A", "2  8", "- - - -"],["SET 3,B", "2  8", "- - - -"],["SET 3,C", "2  8", "- - - -"],["SET 3,D", "2  8", "- - - -"],["SET 3,E", "2  8", "- - - -"],["SET 3,H", "2  8", "- - - -"],["SET 3,L", "2  8", "- - - -"],["SET 3,(HL)", "2  16", "- - - -"],["SET 3,A", "2  8", "- - - -"],["SET 4,B", "2  8", "- - - -"],["SET 4,C", "2  8", "- - - -"],["SET 4,D", "2  8", "- - - -"],["SET 4,E", "2  8", "- - - -"],["SET 4,H", "2  8", "- - - -"],["SET 4,L", "2  8", "- - - -"],["SET 4,(HL)", "2  16", "- - - -"],["SET 4,A", "2  8", "- - - -"],["SET 5,B", "2  8", "- - - -"],["SET 5,C", "2  8", "- - - -"],["SET 5,D", "2  8", "- - - -"],["SET 5,E", "2  8", "- - - -"],["SET 5,H", "2  8", "- - - -"],["SET 5,L", "2  8", "- - - -"],["SET 5,(HL)", "2  16", "- - - -"],["SET 5,A", "2  8", "- - - -"],["SET 6,B", "2  8", "- - - -"],["SET 6,C", "2  8", "- - - -"],["SET 6,D", "2  8", "- - - -"],["SET 6,E", "2  8", "- - - -"],["SET 6,H", "2  8", "- - - -"],["SET 6,L", "2  8", "- - - -"],["SET 6,(HL)", "2  16", "- - - -"],["SET 6,A", "2  8", "- - - -"],["SET 7,B", "2  8", "- - - -"],["SET 7,C", "2  8", "- - - -"],["SET 7,D", "2  8", "- - - -"],["SET 7,E", "2  8", "- - - -"],["SET 7,H", "2  8", "- - - -"],["SET 7,L", "2  8", "- - - -"],["SET 7,(HL)", "2  16", "- - - -"],["SET 7,A", "2  8", "- - - -"],];
+const asmCodes = [["NOP", "1  4", "- - - -"],["LD BC,d16", "3  12", "- - - -"],["LD (BC),A", "1  8", "- - - -"],["INC BC", "1  8", "- - - -"],["INC B", "1  4", "Z 0 H -"],["DEC B", "1  4", "Z 1 H -"],["LD B,d8", "2  8", "- - - -"],["RLCA", "1  4", "0 0 0 C"],["LD (a16),SP", "3  20", "- - - -"],["ADD HL,BC", "1  8", "- 0 H C"],["LD A,(BC)", "1  8", "- - - -"],["DEC BC", "1  8", "- - - -"],["INC C", "1  4", "Z 0 H -"],["DEC C", "1  4", "Z 1 H -"],["LD C,d8", "2  8", "- - - -"],["RRCA", "1  4", "0 0 0 C"],["STOP 0", "2  4", "- - - -"],["LD DE,d16", "3  12", "- - - -"],["LD (DE),A", "1  8", "- - - -"],["INC DE", "1  8", "- - - -"],["INC D", "1  4", "Z 0 H -"],["DEC D", "1  4", "Z 1 H -"],["LD D,d8", "2  8", "- - - -"],["RLA", "1  4", "0 0 0 C"],["JR r8", "2  12", "- - - -"],["ADD HL,DE", "1  8", "- 0 H C"],["LD A,(DE)", "1  8", "- - - -"],["DEC DE", "1  8", "- - - -"],["INC E", "1  4", "Z 0 H -"],["DEC E", "1  4", "Z 1 H -"],["LD E,d8", "2  8", "- - - -"],["RRA", "1  4", "0 0 0 C"],["JR NZ,r8", "2  12/8", "- - - -"],["LD HL,d16", "3  12", "- - - -"],["LD (HL+),A", "1  8", "- - - -"],["INC HL", "1  8", "- - - -"],["INC H", "1  4", "Z 0 H -"],["DEC H", "1  4", "Z 1 H -"],["LD H,d8", "2  8", "- - - -"],["DAA", "1  4", "Z - 0 C"],["JR Z,r8", "2  12/8", "- - - -"],["ADD HL,HL", "1  8", "- 0 H C"],["LD A,(HL+)", "1  8", "- - - -"],["DEC HL", "1  8", "- - - -"],["INC L", "1  4", "Z 0 H -"],["DEC L", "1  4", "Z 1 H -"],["LD L,d8", "2  8", "- - - -"],["CPL", "1  4", "- 1 1 -"],["JR NC,r8", "2  12/8", "- - - -"],["LD SP,d16", "3  12", "- - - -"],["LD (HL-),A", "1  8", "- - - -"],["INC SP", "1  8", "- - - -"],["INC (HL)", "1  12", "Z 0 H -"],["DEC (HL)", "1  12", "Z 1 H -"],["LD (HL),d8", "2  12", "- - - -"],["SCF", "1  4", "- 0 0 1"],["JR C,r8", "2  12/8", "- - - -"],["ADD HL,SP", "1  8", "- 0 H C"],["LD A,(HL-)", "1  8", "- - - -"],["DEC SP", "1  8", "- - - -"],["INC A", "1  4", "Z 0 H -"],["DEC A", "1  4", "Z 1 H -"],["LD A,d8", "2  8", "- - - -"],["CCF", "1  4", "- 0 0 C"],["LD B,B", "1  4", "- - - -"],["LD B,C", "1  4", "- - - -"],["LD B,D", "1  4", "- - - -"],["LD B,E", "1  4", "- - - -"],["LD B,H", "1  4", "- - - -"],["LD B,L", "1  4", "- - - -"],["LD B,(HL)", "1  8", "- - - -"],["LD B,A", "1  4", "- - - -"],["LD C,B", "1  4", "- - - -"],["LD C,C", "1  4", "- - - -"],["LD C,D", "1  4", "- - - -"],["LD C,E", "1  4", "- - - -"],["LD C,H", "1  4", "- - - -"],["LD C,L", "1  4", "- - - -"],["LD C,(HL)", "1  8", "- - - -"],["LD C,A", "1  4", "- - - -"],["LD D,B", "1  4", "- - - -"],["LD D,C", "1  4", "- - - -"],["LD D,D", "1  4", "- - - -"],["LD D,E", "1  4", "- - - -"],["LD D,H", "1  4", "- - - -"],["LD D,L", "1  4", "- - - -"],["LD D,(HL)", "1  8", "- - - -"],["LD D,A", "1  4", "- - - -"],["LD E,B", "1  4", "- - - -"],["LD E,C", "1  4", "- - - -"],["LD E,D", "1  4", "- - - -"],["LD E,E", "1  4", "- - - -"],["LD E,H", "1  4", "- - - -"],["LD E,L", "1  4", "- - - -"],["LD E,(HL)", "1  8", "- - - -"],["LD E,A", "1  4", "- - - -"],["LD H,B", "1  4", "- - - -"],["LD H,C", "1  4", "- - - -"],["LD H,D", "1  4", "- - - -"],["LD H,E", "1  4", "- - - -"],["LD H,H", "1  4", "- - - -"],["LD H,L", "1  4", "- - - -"],["LD H,(HL)", "1  8", "- - - -"],["LD H,A", "1  4", "- - - -"],["LD L,B", "1  4", "- - - -"],["LD L,C", "1  4", "- - - -"],["LD L,D", "1  4", "- - - -"],["LD L,E", "1  4", "- - - -"],["LD L,H", "1  4", "- - - -"],["LD L,L", "1  4", "- - - -"],["LD L,(HL)", "1  8", "- - - -"],["LD L,A", "1  4", "- - - -"],["LD (HL),B", "1  8", "- - - -"],["LD (HL),C", "1  8", "- - - -"],["LD (HL),D", "1  8", "- - - -"],["LD (HL),E", "1  8", "- - - -"],["LD (HL),H", "1  8", "- - - -"],["LD (HL),L", "1  8", "- - - -"],["HALT", "1  4", "- - - -"],["LD (HL),A", "1  8", "- - - -"],["LD A,B", "1  4", "- - - -"],["LD A,C", "1  4", "- - - -"],["LD A,D", "1  4", "- - - -"],["LD A,E", "1  4", "- - - -"],["LD A,H", "1  4", "- - - -"],["LD A,L", "1  4", "- - - -"],["LD A,(HL)", "1  8", "- - - -"],["LD A,A", "1  4", "- - - -"],["ADD A,B", "1  4", "Z 0 H C"],["ADD A,C", "1  4", "Z 0 H C"],["ADD A,D", "1  4", "Z 0 H C"],["ADD A,E", "1  4", "Z 0 H C"],["ADD A,H", "1  4", "Z 0 H C"],["ADD A,L", "1  4", "Z 0 H C"],["ADD A,(HL)", "1  8", "Z 0 H C"],["ADD A,A", "1  4", "Z 0 H C"],["ADC A,B", "1  4", "Z 0 H C"],["ADC A,C", "1  4", "Z 0 H C"],["ADC A,D", "1  4", "Z 0 H C"],["ADC A,E", "1  4", "Z 0 H C"],["ADC A,H", "1  4", "Z 0 H C"],["ADC A,L", "1  4", "Z 0 H C"],["ADC A,(HL)", "1  8", "Z 0 H C"],["ADC A,A", "1  4", "Z 0 H C"],["SUB B", "1  4", "Z 1 H C"],["SUB C", "1  4", "Z 1 H C"],["SUB D", "1  4", "Z 1 H C"],["SUB E", "1  4", "Z 1 H C"],["SUB H", "1  4", "Z 1 H C"],["SUB L", "1  4", "Z 1 H C"],["SUB (HL)", "1  8", "Z 1 H C"],["SUB A", "1  4", "Z 1 H C"],["SBC A,B", "1  4", "Z 1 H C"],["SBC A,C", "1  4", "Z 1 H C"],["SBC A,D", "1  4", "Z 1 H C"],["SBC A,E", "1  4", "Z 1 H C"],["SBC A,H", "1  4", "Z 1 H C"],["SBC A,L", "1  4", "Z 1 H C"],["SBC A,(HL)", "1  8", "Z 1 H C"],["SBC A,A", "1  4", "Z 1 H C"],["AND B", "1  4", "Z 0 1 0"],["AND C", "1  4", "Z 0 1 0"],["AND D", "1  4", "Z 0 1 0"],["AND E", "1  4", "Z 0 1 0"],["AND H", "1  4", "Z 0 1 0"],["AND L", "1  4", "Z 0 1 0"],["AND (HL)", "1  8", "Z 0 1 0"],["AND A", "1  4", "Z 0 1 0"],["XOR B", "1  4", "Z 0 0 0"],["XOR C", "1  4", "Z 0 0 0"],["XOR D", "1  4", "Z 0 0 0"],["XOR E", "1  4", "Z 0 0 0"],["XOR H", "1  4", "Z 0 0 0"],["XOR L", "1  4", "Z 0 0 0"],["XOR (HL)", "1  8", "Z 0 0 0"],["XOR A", "1  4", "Z 0 0 0"],["OR B", "1  4", "Z 0 0 0"],["OR C", "1  4", "Z 0 0 0"],["OR D", "1  4", "Z 0 0 0"],["OR E", "1  4", "Z 0 0 0"],["OR H", "1  4", "Z 0 0 0"],["OR L", "1  4", "Z 0 0 0"],["OR (HL)", "1  8", "Z 0 0 0"],["OR A", "1  4", "Z 0 0 0"],["CP B", "1  4", "Z 1 H C"],["CP C", "1  4", "Z 1 H C"],["CP D", "1  4", "Z 1 H C"],["CP E", "1  4", "Z 1 H C"],["CP H", "1  4", "Z 1 H C"],["CP L", "1  4", "Z 1 H C"],["CP (HL)", "1  8", "Z 1 H C"],["CP A", "1  4", "Z 1 H C"],["RET NZ", "1  20/8", "- - - -"],["POP BC", "1  12", "- - - -"],["JP NZ,a16", "3  16/12", "- - - -"],["JP a16", "3  16", "- - - -"],["CALL NZ,a16", "3  24/12", "- - - -"],["PUSH BC", "1  16", "- - - -"],["ADD A,d8", "2  8", "Z 0 H C"],["RST 00H", "1  16", "- - - -"],["RET Z", "1  20/8", "- - - -"],["RET", "1  16", "- - - -"],["JP Z,a16", "3  16/12", "- - - -"],["PREFIX CB", "1  4", "- - - -"],["CALL Z,a16", "3  24/12", "- - - -"],["CALL a16", "3  24", "- - - -"],["ADC A,d8", "2  8", "Z 0 H C"],["RST 08H", "1  16", "- - - -"],["RET NC", "1  20/8", "- - - -"],["POP DE", "1  12", "- - - -"],["JP NC,a16", "3  16/12", "- - - -"],["", "", ""],["CALL NC,a16", "3  24/12", "- - - -"],["PUSH DE", "1  16", "- - - -"],["SUB d8", "2  8", "Z 1 H C"],["RST 10H", "1  16", "- - - -"],["RET C", "1  20/8", "- - - -"],["RETI", "1  16", "- - - -"],["JP C,a16", "3  16/12", "- - - -"],["", "", ""],["CALL C,a16", "3  24/12", "- - - -"],["", "", ""],["SBC A,d8", "2  8", "Z 1 H C"],["RST 18H", "1  16", "- - - -"],["LDH (a8),A", "2  12", "- - - -"],["POP HL", "1  12", "- - - -"],["LD (C),A", "1  8", "- - - -"],["", "", ""],["", "", ""],["PUSH HL", "1  16", "- - - -"],["AND d8", "2  8", "Z 0 1 0"],["RST 20H", "1  16", "- - - -"],["ADD SP,r8", "2  16", "0 0 H C"],["JP (HL)", "1  4", "- - - -"],["LD (a16),A", "3  16", "- - - -"],["", "", ""],["", "", ""],["", "", ""],["XOR d8", "2  8", "Z 0 0 0"],["RST 28H", "1  16", "- - - -"],["LDH A,(a8)", "2  12", "- - - -"],["POP AF", "1  12", "Z N H C"],["LD A,(C)", "1  8", "- - - -"],["DI", "1  4", "- - - -"],["", "", ""],["PUSH AF", "1  16", "- - - -"],["OR d8", "2  8", "Z 0 0 0"],["RST 30H", "1  16", "- - - -"],["LD HL,SP+r8", "2  12", "0 0 H C"],["LD SP,HL", "1  8", "- - - -"],["LD A,(a16)", "3  16", "- - - -"],["EI", "1  4", "- - - -"],["", "", ""],["", "", ""],["CP d8", "2  8", "Z 1 H C"],["RST 38H", "1  16", "- - - -"],];
+
+const asmCodesCB = [["RLC B", "2  8", "Z 0 0 C"],["RLC C", "2  8", "Z 0 0 C"],["RLC D", "2  8", "Z 0 0 C"],["RLC E", "2  8", "Z 0 0 C"],["RLC H", "2  8", "Z 0 0 C"],["RLC L", "2  8", "Z 0 0 C"],["RLC (HL)", "2  16", "Z 0 0 C"],["RLC A", "2  8", "Z 0 0 C"],["RRC B", "2  8", "Z 0 0 C"],["RRC C", "2  8", "Z 0 0 C"],["RRC D", "2  8", "Z 0 0 C"],["RRC E", "2  8", "Z 0 0 C"],["RRC H", "2  8", "Z 0 0 C"],["RRC L", "2  8", "Z 0 0 C"],["RRC (HL)", "2  16", "Z 0 0 C"],["RRC A", "2  8", "Z 0 0 C"],["RL B", "2  8", "Z 0 0 C"],["RL C", "2  8", "Z 0 0 C"],["RL D", "2  8", "Z 0 0 C"],["RL E", "2  8", "Z 0 0 C"],["RL H", "2  8", "Z 0 0 C"],["RL L", "2  8", "Z 0 0 C"],["RL (HL)", "2  16", "Z 0 0 C"],["RL A", "2  8", "Z 0 0 C"],["RR B", "2  8", "Z 0 0 C"],["RR C", "2  8", "Z 0 0 C"],["RR D", "2  8", "Z 0 0 C"],["RR E", "2  8", "Z 0 0 C"],["RR H", "2  8", "Z 0 0 C"],["RR L", "2  8", "Z 0 0 C"],["RR (HL)", "2  16", "Z 0 0 C"],["RR A", "2  8", "Z 0 0 C"],["SLA B", "2  8", "Z 0 0 C"],["SLA C", "2  8", "Z 0 0 C"],["SLA D", "2  8", "Z 0 0 C"],["SLA E", "2  8", "Z 0 0 C"],["SLA H", "2  8", "Z 0 0 C"],["SLA L", "2  8", "Z 0 0 C"],["SLA (HL)", "2  16", "Z 0 0 C"],["SLA A", "2  8", "Z 0 0 C"],["SRA B", "2  8", "Z 0 0 0"],["SRA C", "2  8", "Z 0 0 0"],["SRA D", "2  8", "Z 0 0 0"],["SRA E", "2  8", "Z 0 0 0"],["SRA H", "2  8", "Z 0 0 0"],["SRA L", "2  8", "Z 0 0 0"],["SRA (HL)", "2  16", "Z 0 0 0"],["SRA A", "2  8", "Z 0 0 0"],["SWAP B", "2  8", "Z 0 0 0"],["SWAP C", "2  8", "Z 0 0 0"],["SWAP D", "2  8", "Z 0 0 0"],["SWAP E", "2  8", "Z 0 0 0"],["SWAP H", "2  8", "Z 0 0 0"],["SWAP L", "2  8", "Z 0 0 0"],["SWAP (HL)", "2  16", "Z 0 0 0"],["SWAP A", "2  8", "Z 0 0 0"],["SRL B", "2  8", "Z 0 0 C"],["SRL C", "2  8", "Z 0 0 C"],["SRL D", "2  8", "Z 0 0 C"],["SRL E", "2  8", "Z 0 0 C"],["SRL H", "2  8", "Z 0 0 C"],["SRL L", "2  8", "Z 0 0 C"],["SRL (HL)", "2  16", "Z 0 0 C"],["SRL A", "2  8", "Z 0 0 C"],["BIT 0,B", "2  8", "Z 0 1 -"],["BIT 0,C", "2  8", "Z 0 1 -"],["BIT 0,D", "2  8", "Z 0 1 -"],["BIT 0,E", "2  8", "Z 0 1 -"],["BIT 0,H", "2  8", "Z 0 1 -"],["BIT 0,L", "2  8", "Z 0 1 -"],["BIT 0,(HL)", "2  16", "Z 0 1 -"],["BIT 0,A", "2  8", "Z 0 1 -"],["BIT 1,B", "2  8", "Z 0 1 -"],["BIT 1,C", "2  8", "Z 0 1 -"],["BIT 1,D", "2  8", "Z 0 1 -"],["BIT 1,E", "2  8", "Z 0 1 -"],["BIT 1,H", "2  8", "Z 0 1 -"],["BIT 1,L", "2  8", "Z 0 1 -"],["BIT 1,(HL)", "2  16", "Z 0 1 -"],["BIT 1,A", "2  8", "Z 0 1 -"],["BIT 2,B", "2  8", "Z 0 1 -"],["BIT 2,C", "2  8", "Z 0 1 -"],["BIT 2,D", "2  8", "Z 0 1 -"],["BIT 2,E", "2  8", "Z 0 1 -"],["BIT 2,H", "2  8", "Z 0 1 -"],["BIT 2,L", "2  8", "Z 0 1 -"],["BIT 2,(HL)", "2  16", "Z 0 1 -"],["BIT 2,A", "2  8", "Z 0 1 -"],["BIT 3,B", "2  8", "Z 0 1 -"],["BIT 3,C", "2  8", "Z 0 1 -"],["BIT 3,D", "2  8", "Z 0 1 -"],["BIT 3,E", "2  8", "Z 0 1 -"],["BIT 3,H", "2  8", "Z 0 1 -"],["BIT 3,L", "2  8", "Z 0 1 -"],["BIT 3,(HL)", "2  16", "Z 0 1 -"],["BIT 3,A", "2  8", "Z 0 1 -"],["BIT 4,B", "2  8", "Z 0 1 -"],["BIT 4,C", "2  8", "Z 0 1 -"],["BIT 4,D", "2  8", "Z 0 1 -"],["BIT 4,E", "2  8", "Z 0 1 -"],["BIT 4,H", "2  8", "Z 0 1 -"],["BIT 4,L", "2  8", "Z 0 1 -"],["BIT 4,(HL)", "2  16", "Z 0 1 -"],["BIT 4,A", "2  8", "Z 0 1 -"],["BIT 5,B", "2  8", "Z 0 1 -"],["BIT 5,C", "2  8", "Z 0 1 -"],["BIT 5,D", "2  8", "Z 0 1 -"],["BIT 5,E", "2  8", "Z 0 1 -"],["BIT 5,H", "2  8", "Z 0 1 -"],["BIT 5,L", "2  8", "Z 0 1 -"],["BIT 5,(HL)", "2  16", "Z 0 1 -"],["BIT 5,A", "2  8", "Z 0 1 -"],["BIT 6,B", "2  8", "Z 0 1 -"],["BIT 6,C", "2  8", "Z 0 1 -"],["BIT 6,D", "2  8", "Z 0 1 -"],["BIT 6,E", "2  8", "Z 0 1 -"],["BIT 6,H", "2  8", "Z 0 1 -"],["BIT 6,L", "2  8", "Z 0 1 -"],["BIT 6,(HL)", "2  16", "Z 0 1 -"],["BIT 6,A", "2  8", "Z 0 1 -"],["BIT 7,B", "2  8", "Z 0 1 -"],["BIT 7,C", "2  8", "Z 0 1 -"],["BIT 7,D", "2  8", "Z 0 1 -"],["BIT 7,E", "2  8", "Z 0 1 -"],["BIT 7,H", "2  8", "Z 0 1 -"],["BIT 7,L", "2  8", "Z 0 1 -"],["BIT 7,(HL)", "2  16", "Z 0 1 -"],["BIT 7,A", "2  8", "Z 0 1 -"],["RES 0,B", "2  8", "- - - -"],["RES 0,C", "2  8", "- - - -"],["RES 0,D", "2  8", "- - - -"],["RES 0,E", "2  8", "- - - -"],["RES 0,H", "2  8", "- - - -"],["RES 0,L", "2  8", "- - - -"],["RES 0,(HL)", "2  16", "- - - -"],["RES 0,A", "2  8", "- - - -"],["RES 1,B", "2  8", "- - - -"],["RES 1,C", "2  8", "- - - -"],["RES 1,D", "2  8", "- - - -"],["RES 1,E", "2  8", "- - - -"],["RES 1,H", "2  8", "- - - -"],["RES 1,L", "2  8", "- - - -"],["RES 1,(HL)", "2  16", "- - - -"],["RES 1,A", "2  8", "- - - -"],["RES 2,B", "2  8", "- - - -"],["RES 2,C", "2  8", "- - - -"],["RES 2,D", "2  8", "- - - -"],["RES 2,E", "2  8", "- - - -"],["RES 2,H", "2  8", "- - - -"],["RES 2,L", "2  8", "- - - -"],["RES 2,(HL)", "2  16", "- - - -"],["RES 2,A", "2  8", "- - - -"],["RES 3,B", "2  8", "- - - -"],["RES 3,C", "2  8", "- - - -"],["RES 3,D", "2  8", "- - - -"],["RES 3,E", "2  8", "- - - -"],["RES 3,H", "2  8", "- - - -"],["RES 3,L", "2  8", "- - - -"],["RES 3,(HL)", "2  16", "- - - -"],["RES 3,A", "2  8", "- - - -"],["RES 4,B", "2  8", "- - - -"],["RES 4,C", "2  8", "- - - -"],["RES 4,D", "2  8", "- - - -"],["RES 4,E", "2  8", "- - - -"],["RES 4,H", "2  8", "- - - -"],["RES 4,L", "2  8", "- - - -"],["RES 4,(HL)", "2  16", "- - - -"],["RES 4,A", "2  8", "- - - -"],["RES 5,B", "2  8", "- - - -"],["RES 5,C", "2  8", "- - - -"],["RES 5,D", "2  8", "- - - -"],["RES 5,E", "2  8", "- - - -"],["RES 5,H", "2  8", "- - - -"],["RES 5,L", "2  8", "- - - -"],["RES 5,(HL)", "2  16", "- - - -"],["RES 5,A", "2  8", "- - - -"],["RES 6,B", "2  8", "- - - -"],["RES 6,C", "2  8", "- - - -"],["RES 6,D", "2  8", "- - - -"],["RES 6,E", "2  8", "- - - -"],["RES 6,H", "2  8", "- - - -"],["RES 6,L", "2  8", "- - - -"],["RES 6,(HL)", "2  16", "- - - -"],["RES 6,A", "2  8", "- - - -"],["RES 7,B", "2  8", "- - - -"],["RES 7,C", "2  8", "- - - -"],["RES 7,D", "2  8", "- - - -"],["RES 7,E", "2  8", "- - - -"],["RES 7,H", "2  8", "- - - -"],["RES 7,L", "2  8", "- - - -"],["RES 7,(HL)", "2  16", "- - - -"],["RES 7,A", "2  8", "- - - -"],["SET 0,B", "2  8", "- - - -"],["SET 0,C", "2  8", "- - - -"],["SET 0,D", "2  8", "- - - -"],["SET 0,E", "2  8", "- - - -"],["SET 0,H", "2  8", "- - - -"],["SET 0,L", "2  8", "- - - -"],["SET 0,(HL)", "2  16", "- - - -"],["SET 0,A", "2  8", "- - - -"],["SET 1,B", "2  8", "- - - -"],["SET 1,C", "2  8", "- - - -"],["SET 1,D", "2  8", "- - - -"],["SET 1,E", "2  8", "- - - -"],["SET 1,H", "2  8", "- - - -"],["SET 1,L", "2  8", "- - - -"],["SET 1,(HL)", "2  16", "- - - -"],["SET 1,A", "2  8", "- - - -"],["SET 2,B", "2  8", "- - - -"],["SET 2,C", "2  8", "- - - -"],["SET 2,D", "2  8", "- - - -"],["SET 2,E", "2  8", "- - - -"],["SET 2,H", "2  8", "- - - -"],["SET 2,L", "2  8", "- - - -"],["SET 2,(HL)", "2  16", "- - - -"],["SET 2,A", "2  8", "- - - -"],["SET 3,B", "2  8", "- - - -"],["SET 3,C", "2  8", "- - - -"],["SET 3,D", "2  8", "- - - -"],["SET 3,E", "2  8", "- - - -"],["SET 3,H", "2  8", "- - - -"],["SET 3,L", "2  8", "- - - -"],["SET 3,(HL)", "2  16", "- - - -"],["SET 3,A", "2  8", "- - - -"],["SET 4,B", "2  8", "- - - -"],["SET 4,C", "2  8", "- - - -"],["SET 4,D", "2  8", "- - - -"],["SET 4,E", "2  8", "- - - -"],["SET 4,H", "2  8", "- - - -"],["SET 4,L", "2  8", "- - - -"],["SET 4,(HL)", "2  16", "- - - -"],["SET 4,A", "2  8", "- - - -"],["SET 5,B", "2  8", "- - - -"],["SET 5,C", "2  8", "- - - -"],["SET 5,D", "2  8", "- - - -"],["SET 5,E", "2  8", "- - - -"],["SET 5,H", "2  8", "- - - -"],["SET 5,L", "2  8", "- - - -"],["SET 5,(HL)", "2  16", "- - - -"],["SET 5,A", "2  8", "- - - -"],["SET 6,B", "2  8", "- - - -"],["SET 6,C", "2  8", "- - - -"],["SET 6,D", "2  8", "- - - -"],["SET 6,E", "2  8", "- - - -"],["SET 6,H", "2  8", "- - - -"],["SET 6,L", "2  8", "- - - -"],["SET 6,(HL)", "2  16", "- - - -"],["SET 6,A", "2  8", "- - - -"],["SET 7,B", "2  8", "- - - -"],["SET 7,C", "2  8", "- - - -"],["SET 7,D", "2  8", "- - - -"],["SET 7,E", "2  8", "- - - -"],["SET 7,H", "2  8", "- - - -"],["SET 7,L", "2  8", "- - - -"],["SET 7,(HL)", "2  16", "- - - -"],["SET 7,A", "2  8", "- - - -"],];
+
+export {
+    opCodes,
+    opCodesCB,
+    asmCodes,
+    asmCodesCB,
+};
