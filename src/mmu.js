@@ -1,19 +1,8 @@
-function memcpy(src, srcOffset, dst, dstOffset, length) {
-    let i;
-    src = src.subarray || src.slice ? src : src.buffer;
-    dst = dst.subarray || dst.slice ? dst : dst.buffer;
-    src = srcOffset ? src.subarray ?
-        src.subarray(srcOffset, length && srcOffset + length) :
-        src.slice(srcOffset, length && srcOffset + length) : src;
-    if (dst.set) {
-        dst.set(src, dstOffset);
-    } else {
-        for (i = 0; i < src.length; i++) {
-            dst[i + dstOffset] = src[i];
-        }
-    }
-    return dst;
+function hex(n, length = 4) {
+    const nString = n.toString(16);
+    return "0".repeat(length - nString.length) + nString;
 }
+
 
 class MMU {
     constructor(dmg) {
@@ -33,7 +22,6 @@ class MMU {
          * @type {Uint8Array}
          */
         this.cartridge = undefined;
-        this.isBiosLoaded = false;
     }
 
     /**
@@ -44,7 +32,22 @@ class MMU {
     get(addr) {
         switch (addr) {
             case 0xff00:
-                return 0xff;
+                // 0xFF00 - P1 - Joypad/Super Game Boy communication register
+                // U-1 U-1 W-0 W-0 R-x R-x R-x R-x
+                return 0xcf;
+                // TODO handle input
+            case 0xff02:
+                // 0xFF02 - SC - Serial control register
+                // R/W-0 U-1 U-1 U-1 U-1 U-1 U-1 R/W-0
+                return (this.memory[addr] & 0x81) | 0x7e;
+            case 0xff41:
+                // 0xFF41 - LCDC - PPU status register
+                // U-1 R/W-0 R/W-0 R/W-0 R/W-0 R/W-0 R/W-0 R/W-0
+                return 0x80 | this.memory[addr];
+            case 0xff50:
+                // 0xFF50 - BOOT - Boot ROM lock register
+                // U-1 U-1 U-1 U-1 U-1 U-1 U-1 R/W-0
+                return (this.memory[0xff50] & 0x01) | 0xfe;
             default:
                 if (0xE000 <= addr && addr < 0xFE00) {
                     // E000 FDFF	Mirror of C000~DDFF (ECHO RAM)	Nintendo says use of this area is prohibited.
@@ -110,19 +113,31 @@ class MMU {
                 break;
             case 0xff41:
                 // FF41 - STAT - LCDC Status (R/W)
+                // bit 7 is unused (always returns 1)
                 // bits 0-2 are read-only
-                this.memory[0xff41] = val & 0xfc | this.memory[0xff41] & 0x03;
+                this.memory[addr] = (val & 0xf8) | (this.memory[addr] & 0x07);
                 break;
             case 0xff44:
                 // FF44 - LY - LCDC Y-Coordinate (R)
                 break;
-            case 0xff50:
-                // FF50		DMG	Set to non-zero to disable boot ROM
-                if (this.isBiosLoaded && val !== 0) {
-                    memcpy(this.cartridge, 0, this.memory, 0, 256);
-                    this.isBiosLoaded = false;
+            case 0xff46:
+                // FF46 - DMA - DMA Transfer and Start Address (R/W)
+                const offset = val << 8;
+                for (let i = 0; i < 160; i++) {
+                    this.memory[0xfe00 + i] = this.memory[offset + i];
                 }
-                this.memory[addr] = val;
+                // TODO lock access to memory during 160 cycles
+                console.log('DMA');
+                break;
+            case 0xff50:
+                // FF50		Set bit-0 to 1 to disable Boot ROM (can only transition from 0 to 1)
+                if ((this.memory[addr] & 0x01) === 0 && (val & 0x01) === 1) {
+                    for (let i = 0; i < 256; i++) {
+                        this.memory[i] = this.cartridge[i];
+                    }
+                    this.memory[addr] |= 0x01;
+                    console.log("Boot ROM disabled.");
+                }
                 break;
             default:
                 if (0x0000 <= addr && addr < 0x8000) {
@@ -165,12 +180,26 @@ class MMU {
 
     reset() {
         this.memory[0xff40] = 0;
-        memcpy(this.cartridge, 0, this.memory, 0, 32768);
-        memcpy(this.bios, 0, this.memory, 0, 256);
-        this.isBiosLoaded = true;
+        for (let i = 0; i < 256; i++) {
+            this.memory[i] = this.bios[i];
+        }
+        for (let i = 256; i < 32768; i++) {
+            this.memory[i] = this.cartridge[i];
+        }
+        for (let i = 32768; i < 65536; i++) {
+            this.memory[i] = 0x00;
+        }
+    }
+
+    getRange(addr1, addr2) {
+        const values = [];
+        for (let i = addr1; i < addr2; i++) {
+            values.push(hex(this.memory[i], 2));
+        }
+        return values.join(" ");
     }
 }
 
 export {
-    MMU,
+    MMU, hex,
 };

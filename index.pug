@@ -1,6 +1,7 @@
 doctype html
 html
   head
+    meta(charset="utf-8")
     link(rel="stylesheet" href="./style.css")
   body
     canvas#screen
@@ -8,6 +9,9 @@ html
     button#frame-button Frame
     button#step-button Step
     button#reset-button Reset
+    button#refresh-button Refresh
+    button#break-button Run to Break
+
     div#cpu-info
       span#cpu-clock clk: 0
       table#registers-table
@@ -16,8 +20,8 @@ html
           th BC
           th DE
           th HL
-          th PC
           th SP
+          th PC
           th ZNHC
         tr#registers-row
           td 0000
@@ -27,6 +31,41 @@ html
           td 0000
           td 0000
           td 0000
+    div#previous-asm
     div#asm
     canvas#tiles
+    canvas#background
+    div
+      input#address(type="text" value="0000")
+      button#address-up-button ↑
+      button#address-down-button ↓
+      button(onclick="gb.setViewAddress(0x0000);") Bank 0
+      button(onclick="gb.setViewAddress(0x4000);") Bank 1
+      button(onclick="gb.setViewAddress(0x8000);") VRAM
+      button(onclick="gb.setViewAddress(0xA000);") ExtRAM
+      button(onclick="gb.setViewAddress(0xC000);") WRAM 0
+      button(onclick="gb.setViewAddress(0xD000);") WRAM 1
+      button(onclick="gb.setViewAddress(0xFE00);") OAM
+      button(onclick="gb.setViewAddress(0xFF80);") HRAM
+      table#memory
+        thead
+          tr
+            td
+            td 0
+            td 1
+            td 2
+            td 3
+            td 4
+            td 5
+            td 6
+            td 7
+            td 8
+            td 9
+            td A
+            td B
+            td C
+            td D
+            td E
+            td F
+        tbody#memory-tbody
     script(src="main.js")

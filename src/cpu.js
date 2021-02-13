@@ -22,8 +22,9 @@ class CPU {
          * Interrupt Master Enable Flag (IME)
          * @type {boolean}
          */
-        this.interruptMasterEnable = true;
+        this.interruptMasterEnable = false;
         this.clock = 0;
+        this.previousPC = new Array(5).fill(0);
     }
 
     // 8-bit registers getters and setters
@@ -175,24 +176,26 @@ class CPU {
 
     exec() {
         this.clock = 0;
+        // execute opcode at pc
+        this.previousPC.shift();
+        this.previousPC.push(this.pc);
+        opCodes[this.mmu.get(this.pc)].bind(this)();
+
         // check for interrupts
-        if (this.interruptMasterEnable && this.mmu.memory[0xffff] & this.mmu.memory[0xff0f] & 0x1f) {
+        const interruptMask = this.mmu.memory[0xffff] & this.mmu.memory[0xff0f] & 0x1f;
+        if (this.interruptMasterEnable && interruptMask) {
             // execute interrupt
-            const mask = this.mmu.memory[0xffff] & this.mmu.memory[0xff0f];
             for (let i = 0; i < 5; i++) {
-                if (mask & (1 << i)) {
+                if (interruptMask & (1 << i)) {
                     this.mmu.memory[0xff0f] &= ~(1 << i); // reset IF flag
                     this.interruptMasterEnable = false; // disable interrupts
                     this.sp -= 2;
                     this.mmu.set16(this.sp, this.pc);
-                    this.pc = 0x40 + (i << 3);
+                    this.pc = 0x40 + (0x08 * i);
                     this.clock += 20;
                     break;
                 }
             }
-        } else {
-            // execute opcode at pc
-            opCodes[this.mmu.get(this.pc)].bind(this)();
         }
         return this.clock;
     }
@@ -204,6 +207,13 @@ class CPU {
         this.hl = 0;
         this.pc = 0;
         this.sp = 0;
+        this.interruptMasterEnable = false;
+        this.previousPC = new Array(5).fill(0);
+        // this.af = 0x01b0;
+        // this.bc = 0x0013;
+        // this.de = 0x00d8;
+        // this.hl = 0x014d;
+        // this.pc = 0x0100;
     }
 }
 

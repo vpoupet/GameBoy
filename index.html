@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
@@ -9,6 +10,8 @@
     <button id="frame-button">Frame</button>
     <button id="step-button">Step</button>
     <button id="reset-button">Reset</button>
+    <button id="refresh-button">Refresh</button>
+    <button id="break-button">Run to Break</button>
     <div id="cpu-info"><span id="cpu-clock">clk: 0</span>
       <table id="registers-table">
         <tr>
@@ -16,8 +19,8 @@
           <th>BC</th>
           <th>DE</th>
           <th>HL</th>
-          <th>PC</th>
           <th>SP</th>
+          <th>PC</th>
           <th>ZNHC</th>
         </tr>
         <tr id="registers-row">
@@ -31,8 +34,47 @@
         </tr>
       </table>
     </div>
+    <div id="previous-asm"></div>
     <div id="asm"></div>
     <canvas id="tiles"></canvas>
+    <canvas id="background"></canvas>
+    <div>
+      <input id="address" type="text" value="0000">
+      <button id="address-up-button">↑</button>
+      <button id="address-down-button">↓</button>
+      <button onclick="gb.setViewAddress(0x0000);">Bank 0</button>
+      <button onclick="gb.setViewAddress(0x4000);">Bank 1</button>
+      <button onclick="gb.setViewAddress(0x8000);">VRAM</button>
+      <button onclick="gb.setViewAddress(0xA000);">ExtRAM</button>
+      <button onclick="gb.setViewAddress(0xC000);">WRAM 0</button>
+      <button onclick="gb.setViewAddress(0xD000);">WRAM 1</button>
+      <button onclick="gb.setViewAddress(0xFE00);">OAM</button>
+      <button onclick="gb.setViewAddress(0xFF80);">HRAM</button>
+      <table id="memory">
+        <thead>
+          <tr>
+            <td></td>
+            <td>0</td>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>
+            <td>4</td>
+            <td>5</td>
+            <td>6</td>
+            <td>7</td>
+            <td>8</td>
+            <td>9</td>
+            <td>A</td>
+            <td>B</td>
+            <td>C</td>
+            <td>D</td>
+            <td>E</td>
+            <td>F</td>
+          </tr>
+        </thead>
+        <tbody id="memory-tbody"></tbody>
+      </table>
+    </div>
     <script src="main.js"></script>
   </body>
 </html>

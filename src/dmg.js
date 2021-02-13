@@ -1,6 +1,8 @@
-import { CPU } from './cpu.js';
-import { MMU } from './mmu.js';
-import { PPU } from './ppu.js';
+import {CPU} from './cpu.js';
+import {MMU, hex} from './mmu.js';
+import {PPU} from './ppu.js';
+import {asmCodes, asmCodesCB} from "./opcodes";
+
 
 class DMG {
     constructor(romFile) {
@@ -14,6 +16,7 @@ class DMG {
         this.clock = 0;
         this.isNewFrame = false;
         this.requestID = undefined;
+        this.lcdcStatus = false;
 
         // open BIOS and Cartridge
         Promise.all([
@@ -28,6 +31,8 @@ class DMG {
                     this.mmu.cartridge = new Uint8Array(data);
                 }),
         ]).then(this.reset.bind(this));
+
+        this.viewAddress = 0;
     }
 
     reset() {
@@ -35,7 +40,7 @@ class DMG {
         this.mmu.reset();
         this.cpu.reset();
         this.ppu.setDisplayEnabled(false);
-        console.log("Reset.");
+        this.updateInfo();
     }
 
     /**
@@ -68,13 +73,13 @@ class DMG {
             this.mmu.memory[0xff44] %= 154;
         }
         // FF41 - STAT - LCDC Status (R/W)
+        // Update LCD Mode Flag (bits 0-1)
         switch (this.mmu.memory[0xff41] & 0x03) {
             case 2:
                 // Reading from OAM (80 cycles)
                 if (80 - deltaClock <= lineClock && lineClock < 80) {
                     // switch to mode 3 (OAM + VRAM)
-                    this.mmu.memory[0xff41] &= 0xfc;
-                    this.mmu.memory[0xff41] |= 0x03;
+                    this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x03;
                     this.ppu.drawLine(this.mmu.memory[0xff44]);
                 }
                 break;
@@ -82,11 +87,7 @@ class DMG {
                 // Reading from OAM and VRAM (172 cycles)
                 if (252 - deltaClock <= lineClock && lineClock < 252) {
                     // switch to mode 0 (H-Blank)
-                    this.mmu.memory[0xff41] &= 0xfc;
-                    if (this.mmu.memory[0xff41] & 0x08) {
-                        // request interrupt
-                        this.mmu.memory[0xff0f] |= 0x02;
-                    }
+                    this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc;
                 }
                 break;
             case 0:
@@ -94,20 +95,10 @@ class DMG {
                 if (lineClock + deltaClock >= 456) {
                     if (this.mmu.memory[0xff44] === 144) {
                         // switch to mode 1 (V-Blank)
-                        this.mmu.memory[0xff41] &= 0xfc;
-                        this.mmu.memory[0xff41] |= 0x01;
-                        if (this.mmu.memory[0xff41] & 0x10) {
-                            // request interrupt
-                            this.mmu.memory[0xff0f] |= 0x01;
-                        }
+                        this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x01;
                     } else {
                         // switch to mode 2 (OAM)
-                        this.mmu.memory[0xff41] &= 0xfc;
-                        this.mmu.memory[0xff41] |= 0x02;
-                        if (this.mmu.memory[0xff41] & 0x20) {
-                            // request interrupt
-                            this.mmu.memory[0xff0f] |= 0x02;
-                        }
+                        this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x02;
                     }
                 }
                 break;
@@ -115,30 +106,28 @@ class DMG {
                 // V-blank (4560 cycles)
                 const frameClock = this.clock % 70224;
                 if (frameClock + deltaClock >= 70224) {
-                    // switch to mode 2
-                    this.mmu.memory[0xff41] &= 0xfc;
-                    this.mmu.memory[0xff41] |= 0x02;
-                    if (this.mmu.memory[0xff41] & 0x20) {
-                        // request interrupt
-                        this.mmu.memory[0xff0f] |= 0x02;
-                    }
+                    // switch to mode 2 (OAM)
+                    this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x02;
                     this.isNewFrame = true;
                 }
                 break;
         }
-
-        // LYC=LY Coincidence Interrupt and Flag
+        // Update Coincidence Flag (bit 2)
         if (this.mmu.memory[0xff44] === this.mmu.memory[0xff45]) {
-            // LY == LYC
-            if (!(this.mmu.memory[0xff41] & 0x04) && this.mmu.memory[0xff41] & 0x40) {
-                this.mmu.memory[0xff0f] |= 0x02;    // request interrupt
-            }
             this.mmu.memory[0xff41] |= 0x04;    // set coincidence flag
         } else {
-            // LY != LYC
             this.mmu.memory[0xff41] &= 0xfb;    // reset coincidence flag
         }
-
+        // Update Interrupts
+        const previousStatus = this.lcdcStatus;
+        const _ff41 = this.mmu.memory[0xff41];
+        this.lcdcStatus = (_ff41 & 0x40) && this.mmu.memory[0xff44] === this.mmu.memory[0xff45]
+            || (_ff41 & 0x20) && (_ff41 & 0x03) === 2
+            || (_ff41 & 0x10) && (_ff41 & 0x03) === 1
+            || (_ff41 & 0x08) && (_ff41 & 0x03) === 0;
+        if (!previousStatus && this.lcdcStatus) {
+            this.mmu.memory[0xff0f] |= 0x02;    // request interrupt
+        }
         this.clock += deltaClock;
     }
 
@@ -163,8 +152,82 @@ class DMG {
         window.cancelAnimationFrame(this.requestID);
         this.requestID = undefined;
     }
+
+    updateInfo() {
+        const cpuClock = document.getElementById("cpu-clock");
+        cpuClock.innerHTML = `clk: ${this.clock}`;
+
+        const cpuRegisters = document.getElementById("registers-row");
+        cpuRegisters.innerHTML = `<td>${hex(this.cpu.af, 4)}</td><td>${hex(this.cpu.bc, 4)}</td><td>${hex(this.cpu.de, 4)}</td><td>${hex(this.cpu.hl, 4)}</td><td>${hex(this.cpu.sp, 4)}</td><td>${hex(this.cpu.pc, 4)}</td><td>${this.cpu.flagZ}${this.cpu.flagN}${this.cpu.flagH}${this.cpu.flagC}</td>`;
+
+        let instructions = [];
+        for (const addr of this.cpu.previousPC) {
+            const [instruction, length] = this.getASMInstruction(addr);
+            instructions.push(instruction);
+        }
+        document.getElementById("previous-asm").innerHTML = '<pre>' + instructions.join('\n') + '</pre>';
+
+        instructions = [];
+        let addr = this.cpu.pc;
+        for (let i = 0; i < 10; i++) {
+            const [instruction, length] = this.getASMInstruction(addr);
+            instructions.push(instruction);
+            addr += length;
+        }
+        document.getElementById("asm").innerHTML = '<pre>' + instructions.join('\n') + '</pre>';
+
+        this.ppu.displayTiles();
+        this.ppu.displayBG();
+        this.updateMemoryView();
+    }
+
+    getASMInstruction(addr) {
+        let instruction = "";
+        const opCode = this.mmu.get(addr);
+        let description = asmCodes[opCode][0];
+        let [length, duration] = asmCodes[opCode][1].split("  ").map(parseInt);
+
+        if (opCode === 0xCB) {
+            const opCodeCB = this.mmu.get(addr + 1);
+            description = asmCodesCB[opCodeCB][0];
+            [length, duration] = asmCodesCB[opCodeCB][1].split("  ").map(parseInt);
+            length -= 1;
+        }
+        instruction += `${hex(addr, 4)}: ${description}`;
+
+        if (length === 2) {
+            instruction += ` (${hex(this.mmu.get(addr + 1), 2)})`;
+        } else if (length === 3) {
+            instruction += ` (${hex(this.mmu.get16(addr + 1))})`;
+        }
+        return [instruction, length];
+    }
+
+    updateMemoryView() {
+        const lines = [];
+        for (let addr = this.viewAddress; addr < this.viewAddress + 0x100; addr += 0x10) {
+            const line = ["0x" + hex(addr, 4) + ": "];
+            for (let i = 0x00; i < 0x10; i++) {
+                line.push(hex(this.mmu.memory[addr + i], 2));
+            }
+            lines.push('<tr><td>' + line.join('</td><td>') + '</td></tr>');
+        }
+
+        document.getElementById("memory-tbody").innerHTML = lines.join("");
+    }
+
+    setViewAddress(addr) {
+        if (Number.isNaN(addr)) {
+            this.viewAddress = 0;
+        } else {
+            this.viewAddress = Math.max(0, Math.min(0xff00, addr));
+            this.viewAddress >>= 3;
+            this.viewAddress <<= 3;
+        }
+        this.updateMemoryView();
+    }
 }
 
 export {
-    DMG,
+    DMG, hex
 };
