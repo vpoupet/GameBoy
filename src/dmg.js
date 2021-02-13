@@ -48,8 +48,10 @@ class DMG {
      * @param deltaClock {Number} duration (in clock cycles) of the executed CPU instruction
      */
     update(deltaClock) {
+        this.clock += deltaClock;
+
         // FF04 - DIV - Divider Register (R/W)
-        if ((this.clock & 0xff) + deltaClock >= 256) {
+        if ((this.clock & 0xff) - deltaClock < 0) {
             this.mmu.memory[0xff04] += 1;
         }
         // FF05 - TIMA - Timer counter (R/W)
@@ -57,7 +59,7 @@ class DMG {
         // FF07 - TAC - Timer Control (R/W)
         if (this.mmu.memory[0xff07] & 0x04) {
             const timerControlFrequency = [1024, 16, 64, 256][this.mmu.memory[0xff07] & 0x03];
-            if ((this.clock % timerControlFrequency) + deltaClock >= timerControlFrequency) {
+            if ((this.clock % timerControlFrequency) - deltaClock < 0) {
                 if (this.mmu.memory[0xff05] === 0xff) {
                     this.mmu.memory[0xff05] = this.mmu.memory[0xff06];
                     this.mmu.memory[0xff0f] |= 0x04;    // request interrupt on bit 2
@@ -66,54 +68,39 @@ class DMG {
                 }
             }
         }
+
         const lineClock = this.clock % 456;
+        const frameClock = this.clock % 70224;
         // FF44 - LY - LCDC Y-Coordinate (R)
-        if (lineClock + deltaClock >= 456) {
+        if (lineClock - deltaClock < 0) {
             this.mmu.memory[0xff44] += 1;
             this.mmu.memory[0xff44] %= 154;
         }
+        const _ff44 = this.mmu.memory[0xff44];
         // FF41 - STAT - LCDC Status (R/W)
         // Update LCD Mode Flag (bits 0-1)
-        switch (this.mmu.memory[0xff41] & 0x03) {
-            case 2:
-                // Reading from OAM (80 cycles)
-                if (80 - deltaClock <= lineClock && lineClock < 80) {
-                    // switch to mode 3 (OAM + VRAM)
-                    this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x03;
-                    this.ppu.drawLine(this.mmu.memory[0xff44]);
-                }
-                break;
-            case 3:
-                // Reading from OAM and VRAM (172 cycles)
-                if (252 - deltaClock <= lineClock && lineClock < 252) {
-                    // switch to mode 0 (H-Blank)
-                    this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc;
-                }
-                break;
-            case 0:
-                // H-Blank (204 cycles)
-                if (lineClock + deltaClock >= 456) {
-                    if (this.mmu.memory[0xff44] === 144) {
-                        // switch to mode 1 (V-Blank)
-                        this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x01;
-                    } else {
-                        // switch to mode 2 (OAM)
-                        this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x02;
-                    }
-                }
-                break;
-            case 1:
-                // V-blank (4560 cycles)
-                const frameClock = this.clock % 70224;
-                if (frameClock + deltaClock >= 70224) {
-                    // switch to mode 2 (OAM)
-                    this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | 0x02;
-                    this.isNewFrame = true;
-                }
-                break;
+        let mode;
+        if (frameClock >= 65664) {
+            mode = 1;   // V-blank (4560 cycles)
+        } else if (lineClock < 80) {
+            mode = 2;   // Reading from OAM (80 cycles)
+        } else if (lineClock < 252) {
+            mode = 3;   // Reading from OAM and VRAM (172 cycles)
+        } else {
+            mode = 0;   // H-Blank (204 cycles)
         }
+        this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | mode;
+        // Draw line at beginning of mode 3
+        if (mode === 3 && lineClock - deltaClock < 80) {
+            this.ppu.drawLine(_ff44);
+        }
+        // Set this.isNewFrame at beginning of frame
+        if (frameClock - deltaClock < 0) {
+            this.isNewFrame = true;
+        }
+
         // Update Coincidence Flag (bit 2)
-        if (this.mmu.memory[0xff44] === this.mmu.memory[0xff45]) {
+        if (_ff44 === this.mmu.memory[0xff45]) {
             this.mmu.memory[0xff41] |= 0x04;    // set coincidence flag
         } else {
             this.mmu.memory[0xff41] &= 0xfb;    // reset coincidence flag
@@ -121,14 +108,13 @@ class DMG {
         // Update Interrupts
         const previousStatus = this.lcdcStatus;
         const _ff41 = this.mmu.memory[0xff41];
-        this.lcdcStatus = (_ff41 & 0x40) && this.mmu.memory[0xff44] === this.mmu.memory[0xff45]
+        this.lcdcStatus = (_ff41 & 0x40) && _ff44 === this.mmu.memory[0xff45]
             || (_ff41 & 0x20) && (_ff41 & 0x03) === 2
             || (_ff41 & 0x10) && (_ff41 & 0x03) === 1
             || (_ff41 & 0x08) && (_ff41 & 0x03) === 0;
         if (!previousStatus && this.lcdcStatus) {
             this.mmu.memory[0xff0f] |= 0x02;    // request interrupt
         }
-        this.clock += deltaClock;
     }
 
     cpuStep() {
