@@ -4,6 +4,9 @@ import {PPU} from './ppu.js';
 import {asmCodes, asmCodesCB} from "./opcodes";
 
 
+const pressedKeys = new Set();
+
+
 class DMG {
     constructor(romFile) {
         this.mmu = new MMU(this);
@@ -49,6 +52,28 @@ class DMG {
      */
     update(deltaClock) {
         this.clock += deltaClock;
+
+        // FF00 - P1/JOYP - Joypad (R/W)
+        const previousInputs = this.mmu.memory[0xff00] & 0x0f;
+        let newInputs = 0x0f;
+        if ((this.mmu.memory[0xff00] & 0x20) === 0) {
+            // buttons selected
+            if (pressedKeys.has("q")) this.mmu.memory[0xff00] &= 0xf7;  // Start
+            if (pressedKeys.has("w")) this.mmu.memory[0xff00] &= 0xfb;  // Select
+            if (pressedKeys.has("f")) this.mmu.memory[0xff00] &= 0xfd;  // B
+            if (pressedKeys.has("g")) this.mmu.memory[0xff00] &= 0xfe;  // A
+        }
+        if ((this.mmu.memory[0xff00] & 0x10) === 0) {
+            // directions selected
+            if (pressedKeys.has("ArrowDown")) this.mmu.memory[0xff00] &= 0xf7;  // Down
+            if (pressedKeys.has("ArrowUp")) this.mmu.memory[0xff00] &= 0xfb;    // Up
+            if (pressedKeys.has("ArrowLeft")) this.mmu.memory[0xff00] &= 0xfd;  // Left
+            if (pressedKeys.has("ArrowRight")) this.mmu.memory[0xff00] &= 0xfe; // Right
+        }
+        this.mmu.memory[0xff00] = this.mmu.memory[0xff00] & 0xf0 | newInputs;
+        if (previousInputs & ~newInputs) {
+            this.mmu.memory[0xff0f] |= 0x08;    // request interrupt
+        }
 
         // FF04 - DIV - Divider Register (R/W)
         if ((this.clock & 0xff) - deltaClock < 0) {
@@ -215,5 +240,5 @@ class DMG {
 }
 
 export {
-    DMG, hex
+    DMG, hex, pressedKeys,
 };

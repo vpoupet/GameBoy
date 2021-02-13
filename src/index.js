@@ -1,10 +1,9 @@
-import {DMG} from "./dmg.js";
+import {DMG, pressedKeys} from "./dmg.js";
 
 const gb = new DMG("rom/tetris.gb");
 window.gb = gb;
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;
-
 
 window.onload = function () {
     const canvas = document.getElementById("screen");
@@ -18,6 +17,13 @@ window.onload = function () {
     const bgCanvas = document.getElementById("background");
     bgCanvas.width = 256;
     bgCanvas.height = 256;
+
+    window.addEventListener("keydown", e => {
+        pressedKeys.add(e.key);
+    });
+    window.addEventListener("keyup", e => {
+        pressedKeys.delete(e.key);
+    });
 
     const startButton = document.getElementById("start-button");
     startButton.addEventListener("click", e => {

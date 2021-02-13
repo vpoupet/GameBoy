@@ -34,8 +34,7 @@ class MMU {
             case 0xff00:
                 // 0xFF00 - P1 - Joypad/Super Game Boy communication register
                 // U-1 U-1 W-0 W-0 R-x R-x R-x R-x
-                return 0xcf;
-                // TODO handle input
+                return (this.memory[addr] & 0x0f) | 0xc0;
             case 0xff02:
                 // 0xFF02 - SC - Serial control register
                 // R/W-0 U-1 U-1 U-1 U-1 U-1 U-1 R/W-0
@@ -93,10 +92,14 @@ class MMU {
      */
     set(addr, val) {
         switch (addr) {
+            case 0xff00:
+                // FF00 - P1/JOYP - Joypad (R/W)
+                this.memory[addr] = (this.memory[addr] & 0xcf) | (val & 0x30);
+                break;
             case 0xff04:
                 // FF04 - DIV - Divider Register (R/W)
                 // reset to 0 on write
-                this.memory[0xff04] = 0;
+                this.memory[addr] = 0;
                 break;
             case 0xff40:
                 // FF40 - LCD Control Register
@@ -109,7 +112,7 @@ class MMU {
                 // 1	OBJ (Sprite) Display Enable	0=Off, 1=On
                 // 0	BG/Window Display/Priority	0=Off, 1=On
                 this.dmg.ppu.setDisplayEnabled(val & 0x80);
-                this.memory[0xff40] = val;
+                this.memory[addr] = val;
                 break;
             case 0xff41:
                 // FF41 - STAT - LCDC Status (R/W)
@@ -179,6 +182,7 @@ class MMU {
     }
 
     reset() {
+        this.memory[0xff00] = 0xff;
         this.memory[0xff40] = 0;
         for (let i = 0; i < 256; i++) {
             this.memory[i] = this.bios[i];
