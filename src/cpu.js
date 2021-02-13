@@ -207,6 +207,7 @@ class CPU {
         this.hl = 0;
         this.pc = 0;
         this.sp = 0;
+        this.clock = 0;
         this.interruptMasterEnable = false;
         this.previousPC = new Array(5).fill(0);
         // this.af = 0x01b0;
