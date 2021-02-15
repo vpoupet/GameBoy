@@ -54,21 +54,21 @@ window.onload = function () {
         gb.updateInfo();
     });
     document.getElementById("break-button").addEventListener("click", e => {
-        if (typeof breakCondition === "undefined") return;
+        let breakCondition = document.getElementById("break-condition").value;
         gb.ppu.enabled = false;
-        e.target.disabled = true;
-        if (typeof breakCondition === "number") {
-            while (gb.cpu.pc !== breakCondition) {
+        if (typeof eval(breakCondition) === "number") {
+            const addr = eval(breakCondition);
+            while (gb.cpu.pc !== addr) {
                 gb.cpuStep();
             }
         } else {
-            while (!breakCondition()) {
+            while (!eval(breakCondition)) {
                 gb.cpuStep();
             }
         }
-        e.target.disabled = false;
         gb.ppu.enabled = true;
         gb.updateInfo();
+        console.log("Breakpoint reached");
     });
     document.getElementById("address").addEventListener("keydown", e => {
         if (e.key === 'Enter') {
