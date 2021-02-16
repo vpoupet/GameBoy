@@ -171,7 +171,7 @@ const opCodes = [
         // 12 - LD (DE),A
         // 1  8
         // - - - -
-        this.mmu.set(this.mmu.get(this.de), this.a);
+        this.mmu.set(this.de, this.a);
         this.pc += 1;
         this.clock += 8;
     },
