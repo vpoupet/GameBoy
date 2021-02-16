@@ -1,9 +1,42 @@
 import {DMG, pressedKeys} from "./dmg.js";
 
+// const gb = new DMG("rom/01-special.gb");
+// const gb = new DMG("rom/02-interrupts.gb");
+// const gb = new DMG("rom/03-op sp,hl.gb");
+// const gb = new DMG("rom/04-op r,imm.gb");
+// const gb = new DMG("rom/05-op rp.gb");  // passed
+// const gb = new DMG("rom/06-ld r,r.gb"); // passed
+// const gb = new DMG("rom/07-jr,jp,call,ret,rst.gb");
+// const gb = new DMG("rom/08-misc instrs.gb");    // passed
+// const gb = new DMG("rom/09-op r,r.gb");
+// const gb = new DMG("rom/10-bit ops.gb");    // passed
+// const gb = new DMG("rom/11-op a,(hl).gb");
+// const gb = new DMG("rom/cpu_test.gb");
 const gb = new DMG("rom/tetris.gb");
+
 window.gb = gb;
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;
+
+
+function runToBreak() {
+    let breakCondition = document.getElementById("break-condition").value;
+    gb.ppu.enabled = false;
+    if (typeof eval(breakCondition) === "number") {
+        const addr = eval(breakCondition);
+        while (gb.cpu.pc !== addr) {
+            gb.cpuStep();
+        }
+    } else {
+        while (!eval(breakCondition)) {
+            gb.cpuStep();
+        }
+    }
+    gb.ppu.enabled = true;
+    gb.updateInfo();
+    console.log("Breakpoint reached");
+}
+
 
 window.onload = function () {
     const canvas = document.getElementById("screen");
@@ -47,28 +80,21 @@ window.onload = function () {
     document.getElementById("reset-button").addEventListener("click", e => {
         gb.stop();
         startButton.innerHTML = "Start";
+        document.getElementById("serial-output").innerText = "";
         gb.reset();
         gb.updateInfo();
     });
     document.getElementById("refresh-button").addEventListener("click", e => {
         gb.updateInfo();
     });
-    document.getElementById("break-button").addEventListener("click", e => {
-        let breakCondition = document.getElementById("break-condition").value;
-        gb.ppu.enabled = false;
-        if (typeof eval(breakCondition) === "number") {
-            const addr = eval(breakCondition);
-            while (gb.cpu.pc !== addr) {
-                gb.cpuStep();
-            }
-        } else {
-            while (!eval(breakCondition)) {
-                gb.cpuStep();
-            }
+    document.getElementById("break-condition").addEventListener("keydown", e => {
+        if (e.key === 'Enter') {
+            runToBreak();
+            gb.setViewAddress(parseInt(e.target.value, 16));
         }
-        gb.ppu.enabled = true;
-        gb.updateInfo();
-        console.log("Breakpoint reached");
+    });
+    document.getElementById("break-button").addEventListener("click", e => {
+        runToBreak();
     });
     document.getElementById("address").addEventListener("keydown", e => {
         if (e.key === 'Enter') {

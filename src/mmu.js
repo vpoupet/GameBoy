@@ -96,6 +96,11 @@ class MMU {
                 // FF00 - P1/JOYP - Joypad (R/W)
                 this.memory[addr] = (this.memory[addr] & 0xcf) | (val & 0x30);
                 break;
+            case 0xff01:
+                // FF01 - SB - Serial transfer data (R/W)
+                this.dmg.appendToSerialOutput(val);
+                this.memory[addr] = val;
+                break;
             case 0xff04:
                 // FF04 - DIV - Divider Register (R/W)
                 // reset to 0 on write

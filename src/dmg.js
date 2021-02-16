@@ -36,6 +36,7 @@ class DMG {
         ]).then(this.reset.bind(this));
 
         this.viewAddress = 0;
+        this.serialOutput = [];
     }
 
     reset() {
@@ -165,19 +166,22 @@ class DMG {
     }
 
     updateInfo() {
+        // Clock
         const cpuClock = document.getElementById("cpu-clock");
         cpuClock.innerHTML = `clk: ${this.clock}`;
 
+        // Registers
         const cpuRegisters = document.getElementById("registers-row");
         cpuRegisters.innerHTML = `<td>${hex(this.cpu.af, 4)}</td><td>${hex(this.cpu.bc, 4)}</td><td>${hex(this.cpu.de, 4)}</td><td>${hex(this.cpu.hl, 4)}</td><td>${hex(this.cpu.sp, 4)}</td><td>${hex(this.cpu.pc, 4)}</td><td>${this.cpu.flagZ}${this.cpu.flagN}${this.cpu.flagH}${this.cpu.flagC}</td>`;
 
+        // Previous instructions
         let instructions = [];
         for (const addr of this.cpu.previousPC) {
             const [instruction, length] = this.getASMInstruction(addr);
             instructions.push(instruction);
         }
         document.getElementById("previous-asm").innerHTML = '<pre>' + instructions.join('\n') + '</pre>';
-
+        // Next instructions
         instructions = [];
         let addr = this.cpu.pc;
         for (let i = 0; i < 10; i++) {
@@ -187,11 +191,17 @@ class DMG {
         }
         document.getElementById("asm").innerHTML = '<pre>' + instructions.join('\n') + '</pre>';
 
+        // Tiles and BG
         this.ppu.displayTiles();
         this.ppu.displayBG();
+        // Memory
         this.updateMemoryView();
     }
 
+    appendToSerialOutput(val) {
+        this.serialOutput.push(val);
+        document.getElementById("serial-output").innerText += String.fromCharCode(val);
+    }
     getASMInstruction(addr) {
         let instruction = "";
         const opCode = this.mmu.get(addr);
@@ -219,7 +229,7 @@ class DMG {
         for (let addr = this.viewAddress; addr < this.viewAddress + 0x100; addr += 0x10) {
             const line = ["0x" + hex(addr, 4) + ": "];
             for (let i = 0x00; i < 0x10; i++) {
-                line.push(hex(this.mmu.memory[addr + i], 2));
+                line.push(hex(this.mmu.get(addr + i), 2));
             }
             lines.push('<tr><td>' + line.join('</td><td>') + '</td></tr>');
         }
