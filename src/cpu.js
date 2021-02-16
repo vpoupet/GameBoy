@@ -37,7 +37,7 @@ class CPU {
     }
 
     get f() {
-        return this.registers[0];
+        return this.registers[0] & 0xf0;
     }
 
     set f(val) {
@@ -94,7 +94,7 @@ class CPU {
 
     // 16-bit registers getters and setters
     get af() {
-        return this.registers16[0];
+        return this.registers16[0] & 0xfff0;
     }
 
     set af(val) {
