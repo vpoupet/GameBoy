@@ -8,7 +8,7 @@ const pressedKeys = new Set();
 
 
 class DMG {
-    constructor(romFile) {
+    constructor() {
         this.mmu = new MMU(this);
         this.cpu = new CPU(this);
         this.ppu = new PPU(this);
@@ -22,21 +22,26 @@ class DMG {
         this.lcdcStatus = false;
 
         // open BIOS and Cartridge
-        Promise.all([
-            fetch("rom/dmg.bin")
-                .then(response => response.arrayBuffer())
-                .then(data => {
-                    this.mmu.bios = new Uint8Array(data);
-                }),
-            fetch(romFile)
-                .then(response => response.arrayBuffer())
-                .then(data => {
-                    this.mmu.cartridge = new Uint8Array(data);
-                }),
-        ]).then(this.reset.bind(this));
+        fetch("rom/dmg.bin")
+            .then(response => response.arrayBuffer())
+            .then(data => {
+                this.mmu.bios = new Uint8Array(data);
+            }).then(() => {
+            if (this.mmu.cartridge) this.reset();
+        });
 
         this.viewAddress = 0;
-        this.serialOutput = [];
+    }
+
+    loadRom(romFile) {
+        fetch(romFile)
+            .then(response => response.arrayBuffer())
+            .then(data => {
+                this.mmu.cartridge = new Uint8Array(data);
+            })
+            .then(() => {
+                if (this.mmu.bios) this.reset();
+            });
     }
 
     reset() {
@@ -59,17 +64,17 @@ class DMG {
         let newInputs = 0x0f;
         if ((this.mmu.memory[0xff00] & 0x20) === 0) {
             // buttons selected
-            if (pressedKeys.has("q")) this.mmu.memory[0xff00] &= 0xf7;  // Start
-            if (pressedKeys.has("w")) this.mmu.memory[0xff00] &= 0xfb;  // Select
-            if (pressedKeys.has("f")) this.mmu.memory[0xff00] &= 0xfd;  // B
-            if (pressedKeys.has("g")) this.mmu.memory[0xff00] &= 0xfe;  // A
+            if (pressedKeys.has("q")) newInputs &= ~0x08;  // Start
+            if (pressedKeys.has("w")) newInputs &= ~0x04;  // Select
+            if (pressedKeys.has("f")) newInputs &= ~0x02;  // B
+            if (pressedKeys.has("g")) newInputs &= ~0x01;  // A
         }
         if ((this.mmu.memory[0xff00] & 0x10) === 0) {
             // directions selected
-            if (pressedKeys.has("ArrowDown")) this.mmu.memory[0xff00] &= 0xf7;  // Down
-            if (pressedKeys.has("ArrowUp")) this.mmu.memory[0xff00] &= 0xfb;    // Up
-            if (pressedKeys.has("ArrowLeft")) this.mmu.memory[0xff00] &= 0xfd;  // Left
-            if (pressedKeys.has("ArrowRight")) this.mmu.memory[0xff00] &= 0xfe; // Right
+            if (pressedKeys.has("ArrowDown")) newInputs &= ~0x08;  // Down
+            if (pressedKeys.has("ArrowUp")) newInputs &= ~0x04;    // Up
+            if (pressedKeys.has("ArrowLeft")) newInputs &= ~0x02;  // Left
+            if (pressedKeys.has("ArrowRight")) newInputs &= ~0x01; // Right
         }
         this.mmu.memory[0xff00] = this.mmu.memory[0xff00] & 0xf0 | newInputs;
         if (previousInputs & ~newInputs) {
@@ -200,9 +205,9 @@ class DMG {
     }
 
     appendToSerialOutput(val) {
-        this.serialOutput.push(val);
-        document.getElementById("serial-output").innerText += String.fromCharCode(val);
+        // document.getElementById("serial-output").innerText += String.fromCharCode(val);
     }
+
     getASMInstruction(addr) {
         let instruction = "";
         const opCode = this.mmu.get(addr);

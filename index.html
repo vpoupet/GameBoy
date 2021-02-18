@@ -11,8 +11,27 @@
     <button id="step-button">Step</button>
     <button id="reset-button">Reset</button>
     <button id="refresh-button">Refresh</button>
+    <select id="rom-select" name="rom">
+      <option value="tetris.gb">Tetris</option>
+      <option value="drmario.gb">Dr. Mario</option>
+      <option value="sml.gb">Super Mario Land</option>
+      <option value="opus5.gb">Opus 5</option>
+      <option value="ttt.gb">Tic Tac Toe</option>
+      <option value="01-special.gb">01 Special</option>
+      <option value="02-interrupts.gb">02 Interrupt</option>
+      <option value="03-op sp,hl.gb">03 op sp,hl</option>
+      <option value="04-op r,imm.gb">04 op r,imm</option>
+      <option value="05-op rp.gb">05 op rp</option>
+      <option value="06-ld r,r.gb">06 ld r,r</option>
+      <option value="07-jr,jp,call,ret,rst.gb">07 jr,jp,call,ret,rst</option>
+      <option value="08-misc instrs.gb">08 misc instrs</option>
+      <option value="09-op r,r.gb">09 op r,r</option>
+      <option value="10-bit ops.gb">10 bit ops</option>
+      <option value="11-op a,(hl).gb">11 op a,(hl)</option>
+      <option value="cpu_test.gb">cpu test</option>
+    </select>
     <div id="break">
-      <input id="break-condition" type="text">
+      <input id="break-condition" type="text" value="0x100">
       <button id="break-button">Run to Break</button>
     </div>
     <div id="cpu-info"><span id="cpu-clock">clk: 0</span>
@@ -78,7 +97,6 @@
         <tbody id="memory-tbody"></tbody>
       </table>
     </div>
-    <h3>Serial Output</h3>
     <div id="serial-output"></div>
     <script src="dist/main.js"></script>
   </body>

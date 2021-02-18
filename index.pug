@@ -10,8 +10,26 @@ html
     button#step-button Step
     button#reset-button Reset
     button#refresh-button Refresh
+    select#rom-select(name="rom")
+      option(value="tetris.gb") Tetris
+      option(value="drmario.gb") Dr. Mario
+      option(value="sml.gb") Super Mario Land
+      option(value="opus5.gb") Opus 5
+      option(value="ttt.gb") Tic Tac Toe
+      option(value="01-special.gb") 01 Special
+      option(value="02-interrupts.gb") 02 Interrupt
+      option(value="03-op sp,hl.gb") 03 op sp,hl
+      option(value="04-op r,imm.gb") 04 op r,imm
+      option(value="05-op rp.gb") 05 op rp
+      option(value="06-ld r,r.gb") 06 ld r,r
+      option(value="07-jr,jp,call,ret,rst.gb") 07 jr,jp,call,ret,rst
+      option(value="08-misc instrs.gb") 08 misc instrs
+      option(value="09-op r,r.gb") 09 op r,r
+      option(value="10-bit ops.gb") 10 bit ops
+      option(value="11-op a,(hl).gb") 11 op a,(hl)
+      option(value="cpu_test.gb") cpu test
     div#break
-      input#break-condition(type="text")
+      input#break-condition(type="text" value="0x100")
       button#break-button Run to Break
 
     div#cpu-info
@@ -70,6 +88,5 @@ html
             td E
             td F
         tbody#memory-tbody
-    h3 Serial Output
     div#serial-output
     script(src="dist/main.js")

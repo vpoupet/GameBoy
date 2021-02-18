@@ -1,21 +1,8 @@
 import {DMG, pressedKeys} from "./dmg.js";
 
-// const gb = new DMG("rom/01-special.gb");
-// const gb = new DMG("rom/02-interrupts.gb");
-// const gb = new DMG("rom/03-op sp,hl.gb");
-// const gb = new DMG("rom/04-op r,imm.gb");
-// const gb = new DMG("rom/05-op rp.gb");  // passed
-// const gb = new DMG("rom/06-ld r,r.gb"); // passed
-// const gb = new DMG("rom/07-jr,jp,call,ret,rst.gb");
-// const gb = new DMG("rom/08-misc instrs.gb");    // passed
-// const gb = new DMG("rom/09-op r,r.gb");
-// const gb = new DMG("rom/10-bit ops.gb");    // passed
-// const gb = new DMG("rom/11-op a,(hl).gb");
-// const gb = new DMG("rom/cpu_test.gb");
-// const gb = new DMG("rom/sml.gb");
-const gb = new DMG("rom/tetris.gb");
-
+const gb = new DMG();
 window.gb = gb;
+
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;
 
@@ -38,13 +25,93 @@ function runToBreak() {
     console.log("Breakpoint reached");
 }
 
+function start() {
+    gb.start();
+    document.getElementById("start-button").innerHTML = "Stop";
+}
+
+function stop() {
+    gb.stop();
+    document.getElementById("start-button").innerHTML = "Start";
+    gb.updateInfo();
+}
 
 window.onload = function () {
+    // Keyboard events
+    window.addEventListener("keydown", e => pressedKeys.add(e.key));
+    window.addEventListener("keyup", e => pressedKeys.delete(e.key));
+
+    // Screen canvas
     const canvas = document.getElementById("screen");
     canvas.width = SCREEN_WIDTH;
     canvas.height = SCREEN_HEIGHT;
     gb.ppu.setContext(canvas.getContext('2d'));
 
+    // Execution buttons
+    document.getElementById("start-button")
+        .addEventListener("click", e => {
+            if (gb.requestID !== undefined) stop();
+            else start();
+        });
+    document.getElementById("frame-button")
+        .addEventListener(
+            "click",
+            e => {
+                gb.execFrame();
+                gb.updateInfo();
+            });
+    document.getElementById("step-button")
+        .addEventListener(
+            "click",
+            e => {
+                gb.cpuStep();
+                gb.updateInfo();
+            });
+    document.getElementById("reset-button")
+        .addEventListener(
+            "click",
+            e => {
+                stop();
+                document.getElementById("serial-output").innerText = "";
+                gb.reset();
+                gb.updateInfo();
+            });
+    document.getElementById("refresh-button")
+        .addEventListener(
+            "click",
+            e => {
+                gb.updateInfo();
+            });
+
+    // ROM select
+    const romSelect = document.getElementById("rom-select");
+    romSelect.addEventListener(
+        "change",
+        e => {
+            stop();
+            gb.loadRom("rom/" + e.target.value);
+        }
+    )
+    gb.loadRom("rom/" + romSelect.value);
+
+    // Break condition
+    document.getElementById("break-condition")
+        .addEventListener(
+            "keydown",
+            e => {
+                if (e.key === 'Enter') {
+                    runToBreak();
+                    gb.setViewAddress(parseInt(e.target.value, 16));
+                }
+            });
+    document.getElementById("break-button")
+        .addEventListener(
+            "click",
+            e => {
+                runToBreak();
+            });
+
+    // Tiles and BG canvas
     const tilesCanvas = document.getElementById("tiles");
     tilesCanvas.width = 128;
     tilesCanvas.height = 192;
@@ -52,60 +119,25 @@ window.onload = function () {
     bgCanvas.width = 256;
     bgCanvas.height = 256;
 
-    window.addEventListener("keydown", e => {
-        pressedKeys.add(e.key);
-    });
-    window.addEventListener("keyup", e => {
-        pressedKeys.delete(e.key);
-    });
-
-    const startButton = document.getElementById("start-button");
-    startButton.addEventListener("click", e => {
-        if (gb.requestID !== undefined) {
-            gb.stop();
-            startButton.innerHTML = "Start";
-            gb.updateInfo();
-        } else {
-            gb.start();
-            startButton.innerHTML = "Stop";
-        }
-    })
-    document.getElementById("frame-button").addEventListener("click", e => {
-        gb.execFrame();
-        gb.updateInfo();
-    });
-    document.getElementById("step-button").addEventListener("click", e => {
-        gb.cpuStep();
-        gb.updateInfo();
-    });
-    document.getElementById("reset-button").addEventListener("click", e => {
-        gb.stop();
-        startButton.innerHTML = "Start";
-        document.getElementById("serial-output").innerText = "";
-        gb.reset();
-        gb.updateInfo();
-    });
-    document.getElementById("refresh-button").addEventListener("click", e => {
-        gb.updateInfo();
-    });
-    document.getElementById("break-condition").addEventListener("keydown", e => {
-        if (e.key === 'Enter') {
-            runToBreak();
-            gb.setViewAddress(parseInt(e.target.value, 16));
-        }
-    });
-    document.getElementById("break-button").addEventListener("click", e => {
-        runToBreak();
-    });
-    document.getElementById("address").addEventListener("keydown", e => {
-        if (e.key === 'Enter') {
-            gb.setViewAddress(parseInt(e.target.value, 16));
-        }
-    });
-    document.getElementById("address-down-button").addEventListener("click", e => {
-        gb.setViewAddress(gb.viewAddress + 0x80);
-    });
-    document.getElementById("address-up-button").addEventListener("click", e => {
-        gb.setViewAddress(gb.viewAddress - 0x80);
-    });
+    // Address view buttons
+    document.getElementById("address")
+        .addEventListener(
+            "keydown",
+            e => {
+                if (e.key === 'Enter') {
+                    gb.setViewAddress(parseInt(e.target.value, 16));
+                }
+            });
+    document.getElementById("address-down-button")
+        .addEventListener(
+            "click",
+            e => {
+                gb.setViewAddress(gb.viewAddress + 0x80);
+            });
+    document.getElementById("address-up-button")
+        .addEventListener(
+            "click",
+            e => {
+                gb.setViewAddress(gb.viewAddress - 0x80);
+            });
 };
