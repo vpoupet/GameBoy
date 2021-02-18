@@ -5,6 +5,7 @@ html {
 
 #screen {
   background: black;
+  width: 480px;
 }
 
 #break-condition {

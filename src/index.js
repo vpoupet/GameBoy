@@ -115,9 +115,12 @@ window.onload = function () {
     const tilesCanvas = document.getElementById("tiles");
     tilesCanvas.width = 128;
     tilesCanvas.height = 192;
-    const bgCanvas = document.getElementById("background");
-    bgCanvas.width = 256;
-    bgCanvas.height = 256;
+    const bgCanvas0 = document.getElementById("background0");
+    bgCanvas0.width = 256;
+    bgCanvas0.height = 256;
+    const bgCanvas1 = document.getElementById("background1");
+    bgCanvas1.width = 256;
+    bgCanvas1.height = 256;
 
     // Address view buttons
     document.getElementById("address")

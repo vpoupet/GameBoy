@@ -199,7 +199,7 @@ class DMG {
 
         // Tiles and BG
         this.ppu.displayTiles();
-        this.ppu.displayBG();
+        this.ppu.displayMaps();
         // Memory
         this.updateMemoryView();
     }

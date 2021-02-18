@@ -1,4 +1,3 @@
-// const colors = [0xFF3DBAA2, 0xFF38AA92, 0xFF36603D, 0xFF14371B];
 const colors = [0xFF0FBC9B, 0xFF0FAC8B, 0xFF306230, 0xFF0F380F, 0xFF9FDCCA];
 
 
@@ -16,13 +15,15 @@ class PPU {
         this.lineArray = new Uint32Array(this.lineData.data.buffer);
     }
 
-    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3]) {
+    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency=false) {
         const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
         const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
         for (let i = 0; i < 8; i++) {
             const j = 7 - i;
             const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
-            buffer[bufferOffset + i] = colors[palette[shade]];
+            if (shade !== 0 || !transparency) {
+                buffer[bufferOffset + i] = colors[palette[shade]];
+            }
         }
     }
 
@@ -78,6 +79,28 @@ class PPU {
                 this.lineData[i] = colors[0];
             }
         }
+
+        // Sprites
+        // TODO: Redo sprite drawing to handle
+        // - 10 sprites per line limitation
+        // - sprite priority
+        // - sprite transparency (over or under BG and Window)
+        // - Y/X flip
+        if (_ff40 & 0x02) { // Sprites enabled
+            const obp0 = this.makePalette(this.mmu.memory[0xff48]); // OBP0 - Object Palette 0 Data
+            const obp1 = this.makePalette(this.mmu.memory[0xff49]); // OBP1 - Object Palette 1 Data
+            const spriteSize = _ff40 & 0x04 ? 16 : 8;
+            for (let spriteOffset = 0xfe00; spriteOffset < 0xfea0; spriteOffset += 4) {
+                const spriteLine = ly - (this.mmu.memory[spriteOffset] - 16);
+                if (0 <= spriteLine && spriteLine < spriteSize) {
+                    const spriteX = this.mmu.memory[spriteOffset + 1] - 8;
+                    const tileDataOffset = 0x8000 + this.mmu.memory[spriteOffset + 2] * 16;
+                    const spriteAttributes = this.mmu.memory[spriteOffset + 3];
+                    const palette = spriteAttributes & 0x10 ? obp1 : obp0;
+                    this.fetchTileLine(tileDataOffset, spriteLine, this.lineArray, spriteX, palette, true);
+                }
+            }
+        }
         this.screenContext.putImageData(this.lineData, 0, ly);
     }
 
@@ -109,39 +132,39 @@ class PPU {
         tilesContext.putImageData(tilesData, 0, 0);
     }
 
-    displayBG() {
-        const bgCanvas = document.getElementById("background");
-        const bgContext = bgCanvas.getContext('2d');
-        const bgData = bgContext.createImageData(256, 256);
-        const bgArray = new Uint32Array(bgData.data.buffer);
-        const tileMapOffset = this.mmu.memory[0xff40] & 0x08 ? 0x9c00 : 0x9800;
-        const palette = makePalette(this.mmu.memory[0xff47]);
-        let offset = 0;
-        let tileOffset;
-        for (let ty = 0; ty < 32; ty++) {
-            for (let lineIndex = 0; lineIndex < 8; lineIndex++) {
-                for (let tx = 0; tx < 32; tx++) {
-                    const tileIndex = this.mmu.memory[tileMapOffset + 32 * ty + tx];
-                    if (this.mmu.memory[0xff40] & 0x10) {
-                        tileOffset = 0x8000 + 16 * tileIndex;
-                    } else {
-                        tileOffset = 0x9000 + 16 * (tileIndex << 24 >> 24);
+    displayMaps() {
+        const palette = this.makePalette(this.mmu.memory[0xff47]);
+        for (let mapIndex = 0; mapIndex < 2; mapIndex++) {
+            const bgCanvas = document.getElementById("background" + mapIndex);
+            const bgContext = bgCanvas.getContext('2d');
+            const bgData = bgContext.createImageData(256, 256);
+            const bgArray = new Uint32Array(bgData.data.buffer);
+            const tileMapOffset = mapIndex === 0 ? 0x9800 : 0x9c00;
+            let offset = 0;
+            let tileOffset;
+            for (let ty = 0; ty < 32; ty++) {
+                for (let lineIndex = 0; lineIndex < 8; lineIndex++) {
+                    for (let tx = 0; tx < 32; tx++) {
+                        const tileIndex = this.mmu.memory[tileMapOffset + 32 * ty + tx];
+                        if (this.mmu.memory[0xff40] & 0x10) {
+                            tileOffset = 0x8000 + 16 * tileIndex;
+                        } else {
+                            tileOffset = 0x9000 + 16 * (tileIndex << 24 >> 24);
+                        }
+                        this.fetchTileLine(
+                            tileOffset,
+                            lineIndex,
+                            bgArray,
+                            offset,
+                            palette,
+                        )
+                        offset += 8;
                     }
-                    this.fetchTileLine(
-                        tileOffset,
-                        lineIndex,
-                        bgArray,
-                        offset,
-                        palette,
-                    )
-                    offset += 8;
                 }
             }
+            bgContext.putImageData(bgData, 0, 0);
         }
-        bgContext.putImageData(bgData, 0, 0);
     }
 }
 
-export {
-    PPU,
-};
+export {PPU};
