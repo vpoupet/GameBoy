@@ -1,10 +1,6 @@
 // const colors = [0xFF3DBAA2, 0xFF38AA92, 0xFF36603D, 0xFF14371B];
 const colors = [0xFF0FBC9B, 0xFF0FAC8B, 0xFF306230, 0xFF0F380F, 0xFF9FDCCA];
 
-function makePalette(byte) {
-    return [byte & 0x03, byte >> 2 & 0x03, byte >> 4 & 0x03, byte >> 6];
-}
-
 
 class PPU {
     constructor(dmg) {
@@ -30,28 +26,57 @@ class PPU {
         }
     }
 
+    makePalette(value) {
+        return [value & 0x03, (value >> 2) & 0x03, (value >> 4) & 0x03, value >> 6];
+    }
+
     drawLine(ly) {
         if (!this.enabled || !this.isDisplayEnabled) return;
-        const bgTileMapOffset = (this.mmu.memory[0xff40] & 0x08 ? 0x9c00 : 0x9800);
-        const bgPalette = [
-            this.mmu.memory[0xff47] & 0x03,
-            (this.mmu.memory[0xff47] >> 2) & 0x03,
-            (this.mmu.memory[0xff47] >> 4) & 0x03,
-            this.mmu.memory[0xff47] >> 6,
-        ];
-        const bgY = (ly + this.mmu.memory[0xff42]) & 0xff;
-        const tileY = bgY >> 3;
-        const tileLine = bgY % 8;
-        let tileX = this.mmu.memory[0xff43] >> 3;
-        let lineX = -(this.mmu.memory[0xff43] & 0x0f);
-
-        while (lineX < 160) {
-            const tileIndex = this.mmu.memory[bgTileMapOffset + tileY * 32 + tileX];
-            const tileDataOffset = this.mmu.memory[0xff40] & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-            this.fetchTileLine(tileDataOffset, tileLine, this.lineArray, lineX, bgPalette);
-            tileX += 1;
-            tileX %= 32;
-            lineX += 8;
+        const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
+        if (_ff40 & 0x01) {
+            // draw BG
+            const _ff42 = this.mmu.memory[0xff42];  // SCY - Scroll Y
+            const _ff43 = this.mmu.memory[0xff43];  // SCX - Scroll X
+            const bgPalette = this.makePalette(this.mmu.memory[0xff47]);
+            const bgY = (ly + _ff42) & 0xff;
+            const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800) + 32 * (bgY >> 3);
+            const bgTileLine = bgY % 8;
+            let tx = _ff43 >> 3;        // x-coord of the current tile in tilemap
+            let lx = -(_ff43 & 0x0f);   // x-coord along the current line
+            while (lx < 160) {
+                const tileIndex = this.mmu.memory[bgTileMapOffset + tx];
+                const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+                this.fetchTileLine(tileDataOffset, bgTileLine, this.lineArray, lx, bgPalette);
+                tx += 1;
+                tx %= 32;
+                lx += 8;
+            }
+            if (_ff40 & 0x20) {
+                // draw Window
+                const _ff4a = this.mmu.memory[0xff4a];  // WY - Window Y Position
+                const _ff4b = this.mmu.memory[0xff4b];  // WX - Window X Position minus 7
+                if (_ff4a <= ly) {
+                    // Window is shown on current line
+                    const winY = ly - _ff4a;
+                    const winTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800) + 32 * (winY >> 3);
+                    const winTileLine = winY % 8;
+                    tx = _ff4b >> 3;
+                    lx = _ff4a - 7;
+                    while (lx < 160) {
+                        const tileIndex = this.mmu.memory[winTileMapOffset + tx];
+                        const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+                        this.fetchTileLine(tileDataOffset, winTileLine, this.lineArray, lx, bgPalette);
+                        tx += 1;
+                        tx %= 32;
+                        lx += 8;
+                    }
+                }
+            }
+        } else {
+            // clear line
+            for (let i = 0; i < 160; i++) { // clear line
+                this.lineData[i] = colors[0];
+            }
         }
         this.screenContext.putImageData(this.lineData, 0, ly);
     }
