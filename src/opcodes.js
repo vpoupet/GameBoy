@@ -1074,8 +1074,7 @@ const opCodes = [
         // 76 - HALT
         // 1  4
         // - - - -
-        // TODO HALT
-        throw new Error("Not Implemented");
+        this.isHalted = true;
         this.pc += 1;
         this.clock += 4;
     },

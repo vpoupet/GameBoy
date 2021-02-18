@@ -135,7 +135,6 @@ class MMU {
                     this.memory[0xfe00 + i] = this.memory[offset + i];
                 }
                 // TODO lock access to memory during 160 cycles
-                console.log('DMA');
                 break;
             case 0xff50:
                 // FF50		Set bit-0 to 1 to disable Boot ROM (can only transition from 0 to 1)

@@ -7,6 +7,7 @@ class CPU {
     constructor(dmg) {
         this.dmg = dmg;
         this.mmu = dmg.mmu;
+        this.isHalted = false;
 
         /**
          * 8bit registers F A C B E D L H (followed by SP and PC)
@@ -176,24 +177,36 @@ class CPU {
 
     exec() {
         this.clock = 0;
-        // execute opcode at pc
-        this.previousPC.shift();
-        this.previousPC.push(this.pc);
-        opCodes[this.mmu.get(this.pc)].bind(this)();
+        const previousInterruptMasterEnable = this.interruptMasterEnable;
 
-        // check for interrupts
-        const interruptMask = this.mmu.memory[0xffff] & this.mmu.memory[0xff0f] & 0x1f;
-        if (this.interruptMasterEnable && interruptMask) {
-            // execute interrupt
-            for (let i = 0; i < 5; i++) {
-                if (interruptMask & (1 << i)) {
-                    this.mmu.memory[0xff0f] &= ~(1 << i); // reset IF flag
-                    this.interruptMasterEnable = false; // disable interrupts
-                    this.sp -= 2;
-                    this.mmu.set16(this.sp, this.pc);
-                    this.pc = 0x40 + (0x08 * i);
-                    this.clock += 20;
-                    break;
+        // execute opcode at pc
+        if (this.isHalted) {
+            if (this.mmu.memory[0xffff] & this.mmu.memory[0xff0f] & 0x1f) {
+                this.isHalted = false;
+            } else {
+                this.clock += 4;
+            }
+        } else {
+            this.previousPC.shift();
+            this.previousPC.push(this.pc);
+            opCodes[this.mmu.get(this.pc)].bind(this)();
+        }
+
+        if (this.interruptMasterEnable && previousInterruptMasterEnable) {
+            // check for interrupts
+            const interruptMask = this.mmu.memory[0xffff] & this.mmu.memory[0xff0f] & 0x1f;
+            if (interruptMask) {
+                // execute interrupt
+                for (let i = 0; i < 5; i++) {
+                    if (interruptMask & (1 << i)) {
+                        this.mmu.memory[0xff0f] &= ~(1 << i); // reset IF flag
+                        this.interruptMasterEnable = false; // disable interrupts
+                        this.sp -= 2;
+                        this.mmu.set16(this.sp, this.pc);
+                        this.pc = 0x40 + (0x08 * i);
+                        this.clock += 20;
+                        break;
+                    }
                 }
             }
         }
@@ -210,11 +223,6 @@ class CPU {
         this.clock = 0;
         this.interruptMasterEnable = false;
         this.previousPC = new Array(5).fill(0);
-        // this.af = 0x01b0;
-        // this.bc = 0x0013;
-        // this.de = 0x00d8;
-        // this.hl = 0x014d;
-        // this.pc = 0x0100;
     }
 }
 
