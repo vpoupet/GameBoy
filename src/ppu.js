@@ -20,36 +20,38 @@ class PPU {
         this.lineArray = new Uint32Array(this.lineData.data.buffer);
     }
 
-    drawLine(ly) {
-        if (!this.enabled || !this.isDisplayEnabled) {
-            return;
+    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3]) {
+        const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
+        const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
+        for (let i = 0; i < 8; i++) {
+            const j = 7 - i;
+            const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
+            buffer[bufferOffset + i] = colors[palette[shade]];
         }
-        const y = (ly + this.mmu.memory[0xff42]) & 0xff;
-        const tileY = y >> 3;
-        const pixelY = y & 0x07;
-        let x = this.mmu.memory[0xff43];
-        let tileX = x >> 3;
-        let pixelX = 7 - (x & 0x07);
-        const tileMapOffset = (this.mmu.memory[0xff40] & 0x08 ? 0x9c00 : 0x9800) + tileY * 32;
-        let tileIndex;
-        let tileDataOffset;
-        const palette = [
+    }
+
+    drawLine(ly) {
+        if (!this.enabled || !this.isDisplayEnabled) return;
+        const bgTileMapOffset = (this.mmu.memory[0xff40] & 0x08 ? 0x9c00 : 0x9800);
+        const bgPalette = [
             this.mmu.memory[0xff47] & 0x03,
             (this.mmu.memory[0xff47] >> 2) & 0x03,
             (this.mmu.memory[0xff47] >> 4) & 0x03,
             this.mmu.memory[0xff47] >> 6,
         ];
-        for (let i = 0; i < 160; i++) {
-            tileIndex = this.mmu.memory[tileMapOffset + tileX];
-            tileDataOffset = this.mmu.memory[0xff40] & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-            let lineByte0 = this.mmu.memory[tileDataOffset + 2 * pixelY];
-            let lineByte1 = this.mmu.memory[tileDataOffset + 2 * pixelY + 1];
-            let pixelValue = palette[((lineByte0 >> pixelX) & 0x01) | (((lineByte1 >> pixelX) & 0x01) << 1)];
-            this.lineArray[i] = colors[pixelValue];
-            x += 1;
-            x &= 0xff;
-            tileX = x >> 3;
-            pixelX = 7 - (x & 0x07);
+        const bgY = (ly + this.mmu.memory[0xff42]) & 0xff;
+        const tileY = bgY >> 3;
+        const tileLine = bgY % 8;
+        let tileX = this.mmu.memory[0xff43] >> 3;
+        let lineX = -(this.mmu.memory[0xff43] & 0x0f);
+
+        while (lineX < 160) {
+            const tileIndex = this.mmu.memory[bgTileMapOffset + tileY * 32 + tileX];
+            const tileDataOffset = this.mmu.memory[0xff40] & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+            this.fetchTileLine(tileDataOffset, tileLine, this.lineArray, lineX, bgPalette);
+            tileX += 1;
+            tileX %= 32;
+            lineX += 8;
         }
         this.screenContext.putImageData(this.lineData, 0, ly);
     }
@@ -61,16 +63,6 @@ class PPU {
             this.isDisplayEnabled = false;
             this.screenContext.fillStyle = "#CADC9F";
             this.screenContext.fillRect(0, 0, 160, 144);
-        }
-    }
-
-    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3]) {
-        const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
-        const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
-        for (let i = 0; i < 8; i++) {
-            const j = 7 - i;
-            const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
-            buffer[bufferOffset + i] = colors[palette[shade]];
         }
     }
 

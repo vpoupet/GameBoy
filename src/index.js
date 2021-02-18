@@ -12,6 +12,7 @@ import {DMG, pressedKeys} from "./dmg.js";
 // const gb = new DMG("rom/10-bit ops.gb");    // passed
 // const gb = new DMG("rom/11-op a,(hl).gb");
 // const gb = new DMG("rom/cpu_test.gb");
+// const gb = new DMG("rom/sml.gb");
 const gb = new DMG("rom/tetris.gb");
 
 window.gb = gb;
