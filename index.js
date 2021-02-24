@@ -1,4 +1,4 @@
-import {DMG, pressedKeys} from "./dmg.js";
+import {DMG, pressedKeys} from "./src/dmg.js";
 
 const gb = new DMG();
 window.gb = gb;
