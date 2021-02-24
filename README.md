@@ -6,15 +6,11 @@ Since there are already hundreds of perfectly functional Game Boy emulators (wit
 
 ## Getting Started
 
-The emulator is supposed to be run in a browser. An up to date *webpack* version is hosted on [this project's Github pages page](https://vpoupet.github.io/GameBoy/).
+The emulator is supposed to be run in a browser. It can be opened directly from [this project's Github pages link](https://vpoupet.github.io/GameBoy/).
 
 ### Prerequisites
 
-There are no prerequisites to run the project as it can be directly opened [in a browser](https://vpoupet.github.io/GameBoy/).
-
-### Installing
-
-All the JS code is in the `/src` directory. The file `/index.html` executes the script `/dist/main.js` that should be produced by *webpack*.
+There are no prerequisites to run the project as it can be directly opened in a browser either from [github pages](https://vpoupet.github.io/GameBoy/) or by opening the page `index.html` from a web server (because of cross origin requests, it cannot be opened as a local file).
 
 ## Running the tests
 

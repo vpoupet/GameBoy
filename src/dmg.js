@@ -1,7 +1,7 @@
 import {CPU} from './cpu.js';
 import {MMU, hex} from './mmu.js';
 import {PPU} from './ppu.js';
-import {asmCodes, asmCodesCB} from "./opcodes";
+import {asmCodes, asmCodesCB} from "./opcodes.js";
 
 
 const pressedKeys = new Set();
