@@ -2122,14 +2122,14 @@ const opCodes = [
         // CE - ADC A,d8
         // 2  8
         // Z 0 H C
-        const cy = this.flagC;
-        const x = this.mmu.get(this.pc);
-        const r = this.a + x + cy;
-        this.flagN = 0;
-        this.flagH = (this.a & 0x0f) + (x & 0x0f) + cy > 0x0f;
-        this.flagC = r > 0xff;
-        this.a = r;
+        const d8 = this.mmu.get(this.pc + 1);
+        const res = this.a + d8 + this.flagC;
+        const mask = this.a ^ d8 ^ this.flagC ^ res;
+        this.a = res;
         this.flagZ = this.a === 0;
+        this.flagN = 0;
+        this.flagH = mask & 0x10;
+        this.flagC = mask & 0x100;
         this.pc += 2;
         this.clock += 8;
     },
@@ -2377,11 +2377,12 @@ const opCodes = [
         // 0 0 H C
         const r8 = this.mmu.get(this.pc + 1) << 24 >> 24;
         const res = this.sp + r8;
+        const mask = this.sp ^ r8 ^ res;
+        this.sp = res;
         this.flagZ = 0;
         this.flagN = 0;
-        this.flagH = (this.sp ^ r8 ^ res) & 0x10;
-        this.flagC = (this.sp ^ r8 ^ res) & 0x100;
-        this.sp = res;
+        this.flagH = mask & 0x10;
+        this.flagC = mask & 0x100;
         this.pc += 2;
         this.clock += 16;
     },
@@ -2506,11 +2507,12 @@ const opCodes = [
         // 0 0 H C
         const r8 = this.mmu.get(this.pc + 1) << 24 >> 24;
         const spr8 = this.sp + r8;
+        const mask = this.sp ^ r8 ^ spr8;
         this.hl = spr8;
         this.flagZ = 0;
         this.flagN = 0;
-        this.flagH = (this.sp ^ r8 ^ spr8) & 0x10;
-        this.flagC = (this.sp ^ r8 ^ spr8) & 0x100;
+        this.flagH = mask & 0x10;
+        this.flagC = mask & 0x100;
         this.pc += 2;
         this.clock += 12;
     },
