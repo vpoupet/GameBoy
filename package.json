@@ -7,7 +7,9 @@
   },
   "type": "module",
   "jest": {
-    "collectCoverage": true
+    "collectCoverage": true,
+    "testEnvironment": "jest-environment-node",
+    "transform": {}
   },
   "repository": {
     "type": "git",

@@ -175,6 +175,10 @@ class CPU {
         val ? this.registers[0] |= 0b00010000 : this.registers[0] &= 0b11101111;
     }
 
+    execOp(opCode) {
+        opCodes[opCode].bind(this)();
+    }
+
     exec() {
         this.clock = 0;
         const previousInterruptMasterEnable = this.interruptMasterEnable;
