@@ -20,10 +20,6 @@ class MMU {
          */
         this.bios = undefined;
         this.isBiosEnabled = false;
-        /**
-         * Byte array containing the cartridge data (can be loaded into memory)
-         * @type {Uint8Array}
-         */
         this.mbc = undefined;
         this.romBank0 = undefined;
         this.romBank1 = undefined;
