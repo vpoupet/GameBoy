@@ -640,7 +640,9 @@ const opCodes = [
         // 3F - CCF
         // 1  4
         // - 0 0 C
-        this.flagC = ~this.flagC;
+        this.flagN = 0;
+        this.flagH = 0;
+        this.flagC = 1 - this.flagC;
         this.pc += 1;
         this.clock += 4;
     },
