@@ -2036,7 +2036,7 @@ const opCodes = [
         // C6 - ADD A,d8
         // 2  8
         // Z 0 H C
-        const x = this.mmu.get(this.pc);
+        const x = this.mmu.get(this.pc + 1);
         const r = this.a + x;
         this.flagN = 0;
         this.flagH = (this.a & 0x0f) + (x & 0x0f) > 0x0f;

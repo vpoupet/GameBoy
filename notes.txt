@@ -1,11 +1,11 @@
 Blargg tests:
-01  Failed
+01  Passed
 02  Failed
 03  Failed
 04  Failed
 05  Passed
 06  Passed
-07  Failed
+07  Passed
 08  Passed
 09  Failed
 10  Passed
