@@ -1,7 +1,7 @@
 Blargg tests:
 01  Passed
 02  Failed
-03  Failed
+03  Passed
 04  Failed
 05  Passed
 06  Passed

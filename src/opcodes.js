@@ -2375,15 +2375,13 @@ const opCodes = [
         // E8 - ADD SP,r8
         // 2  16
         // 0 0 H C
-        const x = (this.mmu.get(this.pc + 1) << 24 >> 24)
-        // TODO Find out if flagH should be set when r8 is negative and addition produces a borrow
-        this.flagH = (this.sp & 0x0fff) + x > 0x0fff;
-        const r = this.sp + x;
-        this.sp = r;
+        const r8 = this.mmu.get(this.pc + 1) << 24 >> 24;
+        const res = this.sp + r8;
         this.flagZ = 0;
         this.flagN = 0;
-        // TODO Find out if flagC should be set when r8 is negative and addition produces a borrow
-        this.flagC = r > 0xffff;
+        this.flagH = (this.sp ^ r8 ^ res) & 0x10;
+        this.flagC = (this.sp ^ r8 ^ res) & 0x100;
+        this.sp = res;
         this.pc += 2;
         this.clock += 16;
     },
@@ -2506,12 +2504,13 @@ const opCodes = [
         // F8 - LD HL,SP+r8
         // 2  12
         // 0 0 H C
-        const x = this.mmu.get(this.pc + 1) << 24 >> 24;
-        this.hl = this.mmu.get16(this.sp + x);
+        const r8 = this.mmu.get(this.pc + 1) << 24 >> 24;
+        const spr8 = this.sp + r8;
+        this.hl = spr8;
         this.flagZ = 0;
         this.flagN = 0;
-        this.flagH = (this.sp & 0x0fff) + x > 0x0fff;
-        this.flagC = this.sp + x > 0xffff;
+        this.flagH = (this.sp ^ r8 ^ spr8) & 0x10;
+        this.flagC = (this.sp ^ r8 ^ spr8) & 0x100;
         this.pc += 2;
         this.clock += 12;
     },
