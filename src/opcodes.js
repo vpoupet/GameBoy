@@ -539,7 +539,7 @@ const opCodes = [
         // Z 1 H -
         const x = this.mmu.get(this.hl);
         this.flagZ = x === 0x01;
-        this.flagN = 0;
+        this.flagN = 1;
         this.flagH = (x & 0x0f) === 0;
         this.mmu.set(this.hl, x - 1);
         this.pc += 1;
@@ -2959,7 +2959,7 @@ const opCodesCB = [
         const d0 = x & 0x01;
         const r = (x >> 1) | (this.flagC << 7);
         this.mmu.set(this.hl, r);
-        this.flagZ = (x & 0xff) === 0;
+        this.flagZ = r === 0;
         this.flagN = 0;
         this.flagH = 0;
         this.flagC = d0;

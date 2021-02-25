@@ -46,6 +46,9 @@ class MMU {
                 // 0xFF41 - LCDC - PPU status register
                 // U-1 R/W-0 R/W-0 R/W-0 R/W-0 R/W-0 R/W-0 R/W-0
                 return 0x80 | this.memory[addr];
+            case 0xff4d:
+                // FF4D - KEY1 - CGB Mode Only - Prepare Speed Switch
+                return 0xff;
             case 0xff50:
                 // 0xFF50 - BOOT - Boot ROM lock register
                 // U-1 U-1 U-1 U-1 U-1 U-1 U-1 R/W-0
