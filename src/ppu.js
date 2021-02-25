@@ -15,14 +15,18 @@ class PPU {
         this.lineArray = new Uint32Array(this.lineData.data.buffer);
     }
 
-    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency=false) {
+    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency=false, flip=false) {
         const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
         const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
         for (let i = 0; i < 8; i++) {
             const j = 7 - i;
             const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
             if (shade !== 0 || !transparency) {
-                buffer[bufferOffset + i] = colors[palette[shade]];
+                if (flip) {
+                    buffer[bufferOffset + 7 - i] = colors[palette[shade]];
+                } else {
+                    buffer[bufferOffset + i] = colors[palette[shade]];
+                }
             }
         }
     }
@@ -85,19 +89,29 @@ class PPU {
         // - 10 sprites per line limitation
         // - sprite priority
         // - sprite transparency (over or under BG and Window)
-        // - Y/X flip
         if (_ff40 & 0x02) { // Sprites enabled
             const obp0 = this.makePalette(this.mmu.memory[0xff48]); // OBP0 - Object Palette 0 Data
             const obp1 = this.makePalette(this.mmu.memory[0xff49]); // OBP1 - Object Palette 1 Data
             const spriteSize = _ff40 & 0x04 ? 16 : 8;
             for (let spriteOffset = 0xfe00; spriteOffset < 0xfea0; spriteOffset += 4) {
-                const spriteLine = ly - (this.mmu.memory[spriteOffset] - 16);
+                const spriteAttributes = this.mmu.memory[spriteOffset + 3];
+                let spriteLine = ly - (this.mmu.memory[spriteOffset] - 16);
+                if (spriteAttributes & 0x40) {  // Y-flip
+                    spriteLine = spriteSize - 1 - spriteLine;
+                }
                 if (0 <= spriteLine && spriteLine < spriteSize) {
                     const spriteX = this.mmu.memory[spriteOffset + 1] - 8;
                     const tileDataOffset = 0x8000 + this.mmu.memory[spriteOffset + 2] * 16;
-                    const spriteAttributes = this.mmu.memory[spriteOffset + 3];
+                    const flipX = (spriteAttributes & 0x20) !== 0;
                     const palette = spriteAttributes & 0x10 ? obp1 : obp0;
-                    this.fetchTileLine(tileDataOffset, spriteLine, this.lineArray, spriteX, palette, true);
+                    this.fetchTileLine(
+                        tileDataOffset,
+                        spriteLine,
+                        this.lineArray,
+                        spriteX,
+                        palette,
+                        true,
+                        flipX);
                 }
             }
         }
