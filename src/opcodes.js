@@ -3247,7 +3247,7 @@ const opCodesCB = [
         // 2  16
         // Z 0 0 0
         const x = this.mmu.get(this.hl);
-        this.set(this.hl, (x << 4) | (x >> 4));
+        this.mmu.set(this.hl, (x << 4) | (x >> 4));
         this.flagZ = x === 0;
         this.flagN = 0;
         this.flagH = 0;
