@@ -24,7 +24,7 @@ class DMG {
         this.viewAddress = 0;
     }
 
-    reset(cartridge=undefined, bios=undefined) {
+    reset(cartridge, bios=undefined) {
         this.clock = 0;
         this.mmu.reset(cartridge, bios);
         this.cpu.reset();

@@ -1,3 +1,5 @@
+import { MBC, MBC1 } from "./mbc.js";
+
 function hex(n, length = 4) {
     const nString = n.toString(16);
     return "0".repeat(length - nString.length) + nString;
@@ -17,11 +19,16 @@ class MMU {
          * @type {Uint8Array}
          */
         this.bios = undefined;
+        this.isBiosEnabled = false;
         /**
          * Byte array containing the cartridge data (can be loaded into memory)
          * @type {Uint8Array}
          */
-        this.cartridge = undefined;
+        this.mbc = undefined;
+        this.romBank0 = undefined;
+        this.romBank1 = undefined;
+        this.externalRamEnabled = false;
+        this.externalRam = undefined;
     }
 
     /**
@@ -48,9 +55,19 @@ class MMU {
                 // U-1 U-1 U-1 U-1 U-1 U-1 U-1 R/W-0
                 return (this.memory[0xff50] & 0x01) | 0xfe;
             default:
-                if (0xE000 <= addr && addr < 0xFE00) {
-                    // E000 FDFF	Mirror of C000~DDFF (ECHO RAM)	Nintendo says use of this area is prohibited.
-                    return this.memory[addr - 0x2000];
+                if (0x0000 <= addr && addr < 0x0100) {
+                    // if BIOS is still loaded, read from bios, otherwise from ROM bank 0
+                    if (this.isBiosEnabled) {
+                        return this.bios[addr];
+                    } else {
+                        return this.romBank0[addr];
+                    }
+                } else if (0x0100 <= addr && addr < 0x4000) {
+                    // 0000	3FFF	16 KiB ROM bank 00	From cartridge, usually a fixed bank
+                    return this.romBank0[addr];
+                } else if (0x4000 <= addr && addr < 0x8000) {
+                    // 4000	7FFF	16 KiB ROM Bank 01~NN	From cartridge, switchable bank via mapper (if any)
+                    return this.romBank1[addr - 0x4000];
                 } else if (0x8000 <= addr && addr < 0xa000) {
                     // 8000	9FFF	8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode Switchable bank 0/1 in CGB mode
                     // VRAM (memory at 8000h-9FFFh) is accessible during Mode 0-2
@@ -59,6 +76,16 @@ class MMU {
                     } else {
                         return 0xff;
                     }
+                } else if (0xa000 <= addr && addr < 0xc000) {
+                    // A000	BFFF	8 KiB External RAM	From cartridge, switchable bank if any
+                    if (this.externalRamEnabled) {
+                        return this.externalRam[addr - 0xa000];
+                    } else {
+                        return 0xff;
+                    }
+                } else if (0xf000 <= addr && addr < 0xfe00) {
+                    // E000 FDFF	Mirror of C000~DDFF (ECHO RAM)	Nintendo says use of this area is prohibited.
+                    return this.memory[addr - 0x2000];
                 } else if (0xfe00 <= addr && addr < 0xfea0) {
                     // FE00	FE9F	Sprite attribute table (OAM)
                     // OAM (memory at FE00h-FE9Fh) is accessible during Mode 0-1
@@ -139,9 +166,7 @@ class MMU {
             case 0xff50:
                 // FF50		Set bit-0 to 1 to disable Boot ROM (can only transition from 0 to 1)
                 if ((this.memory[addr] & 0x01) === 0 && (val & 0x01) === 1) {
-                    for (let i = 0; i < 256; i++) {
-                        this.memory[i] = this.cartridge[i];
-                    }
+                    this.isBiosEnabled = false;
                     this.memory[addr] |= 0x01;
                     console.log("Boot ROM disabled.");
                 }
@@ -150,12 +175,17 @@ class MMU {
                 if (0x0000 <= addr && addr < 0x8000) {
                     // 0000	3FFF	16KB ROM bank 00	From cartridge, usually a fixed bank
                     // 4000	7FFF	16KB ROM Bank 01~NN	From cartridge, switchable bank via MB (if any)
-                    return;
+                    this.mbc.set(addr, val);
                 } else if (0x8000 <= addr && addr < 0xa000) {
                     // 8000	9FFF	8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode Switchable bank 0/1 in CGB mode
                     // VRAM (memory at 8000h-9FFFh) is accessible during Mode 0-2
                     if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
                         this.memory[addr] = val;
+                    }
+                } else if (0xa000 <= addr && addr < 0xc000) {
+                    // A000	BFFF	8 KiB External RAM	From cartridge, switchable bank if any
+                    if (this.externalRamEnabled) {
+                        this.externalRam[addr - 0xa000] = val;
                     }
                 } else if (0xe000 <= addr && addr < 0xfe00) {
                     // E000 FDFF	Mirror of C000~DDFF (ECHO RAM)	Nintendo says use of this area is prohibited.
@@ -185,29 +215,22 @@ class MMU {
         this.set(addr + 1, val >> 8);
     }
 
-    reset(cartridge=undefined, bios=undefined) {
+    reset(cartridge, bios=undefined) {
         this.bios = bios;
-        this.cartridge = cartridge;
-
         switch (cartridge[0x0147]) {
             case 0x00:
-                this.mbc = new MBC(this);
+                this.mbc = new MBC(this, cartridge);
                 break;
             case 0x01:
-                this.mbc = new MBC1(this, cartridge[0x0148], cartridge[0x0149]);
+            case 0x02:
+            case 0x03:
+                this.mbc = new MBC1(this, cartridge);
                 break;
         }
-
-        // load cartridge
-        if (cartridge) {
-            for (let i = 0; i < 32768; i++) {
-                this.memory[i] = cartridge[i];
-            }
-        } else {
-            for (let i = 0; i < 32768; i++) {
-                this.memory[i] = 0x00;
-            }
-        }
+        this.romBank0 = this.mbc.romBanks[0];
+        this.romBank1 = this.mbc.romBanks[1];
+        this.externalRamEnabled = false;
+        this.externalRam = undefined;
 
         // initialize RAM
         for (let i = 32768; i < 65536; i++) {
@@ -216,10 +239,12 @@ class MMU {
 
         // load BIOS or set values after boot sequence
         if (bios) {
+            this.isBiosEnabled = true;
             for (let i = 0; i < 256; i++) {
                 this.memory[i] = bios[i];
             }
         } else {
+            this.isBiosEnabled = false;
             this.memory[0xff05] = 0x00;
             this.memory[0xff06] = 0x00;
             this.memory[0xff07] = 0x00;
