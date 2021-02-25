@@ -3,6 +3,12 @@
   <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="./style.css">
+    <link rel="modulepreload" href="src/cpu.js">
+    <link rel="modulepreload" href="src/dmg.js">
+    <link rel="modulepreload" href="src/mmu.js">
+    <link rel="modulepreload" href="src/opcodes.js">
+    <link rel="modulepreload" href="src/ppu.js">
+    <link rel="modulepreload" href="src/roms.js">
   </head>
   <body>
     <div>
@@ -10,24 +16,28 @@
     </div>
     <div>
       <select id="rom-select" name="rom">
-        <option value="tetris.gb">Tetris</option>
-        <option value="drmario.gb">Dr. Mario</option>
-        <option value="sml.gb">Super Mario Land</option>
-        <option value="opus5.gb">Opus 5</option>
-        <option value="ttt.gb">Tic Tac Toe</option>
-        <option value="01-special.gb">01 Special</option>
-        <option value="02-interrupts.gb">02 Interrupt</option>
-        <option value="03-op sp,hl.gb">03 op sp,hl</option>
-        <option value="04-op r,imm.gb">04 op r,imm</option>
-        <option value="05-op rp.gb">05 op rp</option>
-        <option value="06-ld r,r.gb">06 ld r,r</option>
-        <option value="07-jr,jp,call,ret,rst.gb">07 jr,jp,call,ret,rst</option>
-        <option value="08-misc instrs.gb">08 misc instrs</option>
-        <option value="09-op r,r.gb">09 op r,r</option>
-        <option value="10-bit ops.gb">10 bit ops</option>
-        <option value="11-op a,(hl).gb">11 op a,(hl)</option>
-        <option value="cpu_test.gb">cpu test</option>
+        <option value="tetris">Tetris</option>
+        <option value="drmario">Dr. Mario</option>
+        <option value="sml">Super Mario Land</option>
+        <option value="opus5">Opus 5</option>
+        <option value="ttt">Tic Tac Toe</option>
+        <option value="test01">01 Special</option>
+        <option value="test02">02 Interrupt</option>
+        <option value="test03">03 op sp,hl</option>
+        <option value="test04">04 op r,imm</option>
+        <option value="test05">05 op rp</option>
+        <option value="test06">06 ld r,r</option>
+        <option value="test07">07 jr,jp,call,ret,rst</option>
+        <option value="test08">08 misc instrs</option>
+        <option value="test09">09 op r,r</option>
+        <option value="test10">10 bit ops</option>
+        <option value="test11">11 op a,(hl)</option>
+        <option value="cputest">cpu test</option>
       </select>
+      <input id="skip-boot" type="checkbox" name="skip-boot" checked>
+      <label for="skip-boot">Skip boot</label>
+    </div>
+    <div id="buttons">
       <button id="start-button">Start</button>
       <button id="frame-button">Frame</button>
       <button id="step-button">Step</button>

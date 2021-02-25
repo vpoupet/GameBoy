@@ -185,17 +185,72 @@ class MMU {
         this.set(addr + 1, val >> 8);
     }
 
-    reset() {
-        this.memory[0xff00] = 0xff;
-        this.memory[0xff40] = 0;
-        for (let i = 0; i < 256; i++) {
-            this.memory[i] = this.bios[i];
+    reset(cartridge=undefined, bios=undefined) {
+        this.bios = bios;
+        this.cartridge = cartridge;
+
+        switch (cartridge[0x0147]) {
+            case 0x00:
+                this.mbc = new MBC(this);
+                break;
+            case 0x01:
+                this.mbc = new MBC1(this, cartridge[0x0148], cartridge[0x0149]);
+                break;
         }
-        for (let i = 256; i < 32768; i++) {
-            this.memory[i] = this.cartridge[i];
+
+        // load cartridge
+        if (cartridge) {
+            for (let i = 0; i < 32768; i++) {
+                this.memory[i] = cartridge[i];
+            }
+        } else {
+            for (let i = 0; i < 32768; i++) {
+                this.memory[i] = 0x00;
+            }
         }
+
+        // initialize RAM
         for (let i = 32768; i < 65536; i++) {
             this.memory[i] = 0x00;
+        }
+
+        // load BIOS or set values after boot sequence
+        if (bios) {
+            for (let i = 0; i < 256; i++) {
+                this.memory[i] = bios[i];
+            }
+        } else {
+            this.memory[0xff05] = 0x00;
+            this.memory[0xff06] = 0x00;
+            this.memory[0xff07] = 0x00;
+            this.memory[0xff10] = 0x80;
+            this.memory[0xff11] = 0xbf;
+            this.memory[0xff12] = 0xf3;
+            this.memory[0xff14] = 0xbf;
+            this.memory[0xff16] = 0x3f;
+            this.memory[0xff17] = 0x00;
+            this.memory[0xff19] = 0xbf;
+            this.memory[0xff1a] = 0x7f;
+            this.memory[0xff1b] = 0xff;
+            this.memory[0xff1c] = 0x9f;
+            this.memory[0xff1e] = 0xbf;
+            this.memory[0xff20] = 0xff;
+            this.memory[0xff21] = 0x00;
+            this.memory[0xff22] = 0x00;
+            this.memory[0xff23] = 0xbf;
+            this.memory[0xff24] = 0x77;
+            this.memory[0xff25] = 0xf3;
+            this.memory[0xff26] = 0xf1;
+            this.memory[0xff40] = 0x91;
+            this.memory[0xff42] = 0x00;
+            this.memory[0xff43] = 0x00;
+            this.memory[0xff45] = 0x00;
+            this.memory[0xff47] = 0xfc;
+            this.memory[0xff48] = 0xff;
+            this.memory[0xff49] = 0xff;
+            this.memory[0xff4a] = 0x00;
+            this.memory[0xff4b] = 0x00;
+            this.memory[0xffff] = 0x00;
         }
     }
 

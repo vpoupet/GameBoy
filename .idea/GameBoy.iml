@@ -8,5 +8,6 @@
     <content url="file://$MODULE_DIR$/dist" />
     <orderEntry type="jdk" jdkName="Python 3.8 (GameBoy)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="@types/jest" level="application" />
   </component>
 </module>

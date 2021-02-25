@@ -1,7 +1,8 @@
 import {DMG, pressedKeys} from "./src/dmg.js";
+import {roms} from "./src/roms.js";
 
 const gb = new DMG();
-window.gb = gb;
+window.gb = gb;     // make accessible in the console
 
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;
@@ -36,6 +37,14 @@ function stop() {
     gb.updateInfo();
 }
 
+function reset() {
+    document.getElementById("serial-output").innerText = "";
+    const romSelect = document.getElementById("rom-select");
+    const bios = document.getElementById("skip-boot").checked ? undefined : roms['bios'];
+    gb.reset(roms[romSelect.value], bios);
+    gb.updateInfo();
+}
+
 window.onload = function () {
     // Keyboard events
     window.addEventListener("keydown", e => pressedKeys.add(e.key));
@@ -67,15 +76,7 @@ window.onload = function () {
                 gb.cpuStep();
                 gb.updateInfo();
             });
-    document.getElementById("reset-button")
-        .addEventListener(
-            "click",
-            e => {
-                stop();
-                document.getElementById("serial-output").innerText = "";
-                gb.reset();
-                gb.updateInfo();
-            });
+    document.getElementById("reset-button").addEventListener("click", reset);
     document.getElementById("refresh-button")
         .addEventListener(
             "click",
@@ -85,14 +86,7 @@ window.onload = function () {
 
     // ROM select
     const romSelect = document.getElementById("rom-select");
-    romSelect.addEventListener(
-        "change",
-        e => {
-            stop();
-            gb.loadRom("rom/" + e.target.value);
-        }
-    )
-    gb.loadRom("rom/" + romSelect.value);
+    romSelect.addEventListener("change", reset);
 
     // Break condition
     document.getElementById("break-condition")
@@ -143,4 +137,6 @@ window.onload = function () {
             e => {
                 gb.setViewAddress(gb.viewAddress - 0x80);
             });
+
+    reset();
 };

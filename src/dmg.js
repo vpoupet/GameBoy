@@ -21,34 +21,24 @@ class DMG {
         this.requestID = undefined;
         this.lcdcStatus = false;
 
-        // open BIOS and Cartridge
-        fetch("rom/dmg.bin")
-            .then(response => response.arrayBuffer())
-            .then(data => {
-                this.mmu.bios = new Uint8Array(data);
-            }).then(() => {
-            if (this.mmu.cartridge) this.reset();
-        });
-
         this.viewAddress = 0;
     }
 
-    loadRom(romFile) {
-        fetch(romFile)
-            .then(response => response.arrayBuffer())
-            .then(data => {
-                this.mmu.cartridge = new Uint8Array(data);
-            })
-            .then(() => {
-                if (this.mmu.bios) this.reset();
-            });
-    }
-
-    reset() {
+    reset(cartridge=undefined, bios=undefined) {
         this.clock = 0;
-        this.mmu.reset();
+        this.mmu.reset(cartridge, bios);
         this.cpu.reset();
-        this.ppu.setDisplayEnabled(false);
+        if (bios) {
+            this.ppu.setDisplayEnabled(false);
+        } else {
+            this.cpu.af = 0x01b0;
+            this.cpu.bc = 0x0013;
+            this.cpu.de = 0x00d8;
+            this.cpu.hl = 0x014d;
+            this.cpu.sp = 0xfffe;
+            this.cpu.pc = 0x100;
+            this.ppu.setDisplayEnabled(true);
+        }
         this.updateInfo();
     }
 
