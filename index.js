@@ -46,15 +46,21 @@ function reset() {
 }
 
 window.onload = function () {
-    // Keyboard events
-    window.addEventListener("keydown", e => pressedKeys.add(e.key));
-    window.addEventListener("keyup", e => pressedKeys.delete(e.key));
-
     // Screen canvas
     const canvas = document.getElementById("screen");
     canvas.width = SCREEN_WIDTH;
     canvas.height = SCREEN_HEIGHT;
     gb.ppu.setContext(canvas.getContext('2d'));
+
+    // Keyboard events
+    canvas.addEventListener("keydown", e => {
+        pressedKeys.add(e.key);
+        e.preventDefault();
+    });
+    canvas.addEventListener("keyup", e => {
+        pressedKeys.delete(e.key);
+        e.preventDefault();
+    });
 
     // Execution buttons
     document.getElementById("start-button")
