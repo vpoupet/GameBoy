@@ -47,7 +47,7 @@ class PPU {
             const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800) + 32 * (bgY >> 3);
             const bgTileLine = bgY % 8;
             let tx = _ff43 >> 3;        // x-coord of the current tile in tilemap
-            let lx = -(_ff43 & 0x0f);   // x-coord along the current line
+            let lx = -(_ff43 & 0x07);   // x-coord along the current line
             while (lx < 160) {
                 const tileIndex = this.mmu.memory[bgTileMapOffset + tx];
                 const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
