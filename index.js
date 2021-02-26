@@ -89,7 +89,9 @@ window.onload = function () {
             "click",
             e => {
                 gb.execFrame();
-                gb.updateInfo();
+                if (!gb.shouldUpdateEachFrame) {
+                    gb.updateInfo();
+                }
             });
     document.getElementById("step-button")
         .addEventListener(
@@ -110,6 +112,9 @@ window.onload = function () {
     const romSelect = document.getElementById("rom-select");
     romSelect.addEventListener("change", reset);
 
+    document.getElementById("update-each-frame").addEventListener("change", e => {
+        gb.shouldUpdateEachFrame = e.target.checked;
+    });
     // Break condition
     document.getElementById("break-condition")
         .addEventListener(

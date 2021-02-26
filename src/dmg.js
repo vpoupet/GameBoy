@@ -18,6 +18,7 @@ class DMG {
          */
         this.clock = 0;
         this.isNewFrame = false;
+        this.shouldUpdateEachFrame = false;
         this.requestID = undefined;
         this.lcdcStatus = false;
 
@@ -150,6 +151,9 @@ class DMG {
         this.isNewFrame = false;
         while (!this.isNewFrame) {
             this.cpuStep();
+        }
+        if (this.shouldUpdateEachFrame) {
+            this.updateInfo();
         }
     }
 
