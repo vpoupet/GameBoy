@@ -31,6 +31,61 @@ html {
   top: 145px;
   left: 156px;
 }
+#gameboy .button {
+  position: absolute;
+}
+#gameboy #button-a {
+  top: 626px;
+  left: 492px;
+  width: 90px;
+  height: 90px;
+}
+#gameboy #button-b {
+  top: 674px;
+  left: 392px;
+  width: 90px;
+  height: 90px;
+}
+#gameboy #button-start {
+  top: 823px;
+  left: 290px;
+  width: 88px;
+  height: 64px;
+}
+#gameboy #button-select {
+  top: 823px;
+  left: 187px;
+  width: 88px;
+  height: 64px;
+}
+#gameboy #button-up {
+  top: 608px;
+  left: 95px;
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+}
+#gameboy #button-down {
+  top: 716px;
+  left: 95px;
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+}
+#gameboy #button-left {
+  top: 662px;
+  left: 41px;
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+}
+#gameboy #button-right {
+  top: 662px;
+  left: 149px;
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+}
 
 #other {
   float: left;

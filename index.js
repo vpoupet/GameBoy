@@ -1,12 +1,22 @@
-import {DMG, pressedKeys} from "./src/dmg.js";
+import {DMG, pressedButtons} from "./src/dmg.js";
 import {roms} from "./src/roms.js";
 
 const gb = new DMG();
-window.gb = gb;     // make accessible in the console
-
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;
+const buttonMap = {
+    "q": "Start",
+    "w": "Select",
+    "f": "B",
+    "g": "A",
+    "ArrowUp": "Up",
+    "ArrowDown": "Down",
+    "ArrowLeft": "Left",
+    "ArrowRight": "Right",
+}
 
+window.gb = gb;     // make accessible in the console
+window.buttonMap = buttonMap;
 
 function runToBreak() {
     let breakCondition = document.getElementById("break-condition").value;
@@ -55,14 +65,14 @@ window.onload = function () {
 
     // Keyboard events
     window.addEventListener("keydown", e => {
-        pressedKeys.add(e.key);
+        pressedButtons.add(buttonMap[e.key]);
         if (document.activeElement === document.body &&
             ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
             e.preventDefault();
         }
     });
     window.addEventListener("keyup", e => {
-        pressedKeys.delete(e.key);
+        pressedButtons.delete(buttonMap[e.key]);
         if (document.activeElement === document.body) {
             e.preventDefault();
         }
@@ -150,6 +160,31 @@ window.onload = function () {
                 gb.setViewAddress(gb.viewAddress - 0x80);
             });
 
+    document.getElementById("button-a").addEventListener("pointerdown", () => press('A'));
+    document.getElementById("button-a").addEventListener("pointerup", () => release('A'));
+    document.getElementById("button-b").addEventListener("pointerdown", () => press('B'));
+    document.getElementById("button-b").addEventListener("pointerup", () => release('B'));
+    document.getElementById("button-start").addEventListener("pointerdown", () => press('Start'));
+    document.getElementById("button-start").addEventListener("pointerup", () => release('Start'));
+    document.getElementById("button-select").addEventListener("pointerdown", () => press('Select'));
+    document.getElementById("button-select").addEventListener("pointerup", () => release('Select'));
+    document.getElementById("button-up").addEventListener("pointerdown", () => press('Up'));
+    document.getElementById("button-up").addEventListener("pointerup", () => release('Up'));
+    document.getElementById("button-down").addEventListener("pointerdown", () => press('Down'));
+    document.getElementById("button-down").addEventListener("pointerup", () => release('Down'));
+    document.getElementById("button-left").addEventListener("pointerdown", () => press('Left'));
+    document.getElementById("button-left").addEventListener("pointerup", () => release('Left'));
+    document.getElementById("button-right").addEventListener("pointerdown", () => press('Right'));
+    document.getElementById("button-right").addEventListener("pointerup", () => release('Right'));
+
     reset();
     start();
 };
+
+function press(buttonName) {
+    pressedButtons.add(buttonName);
+}
+
+function release(buttonName) {
+    pressedButtons.delete(buttonName);
+}
