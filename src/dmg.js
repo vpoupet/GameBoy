@@ -68,9 +68,10 @@ class DMG {
             if (pressedKeys.has("ArrowRight")) newInputs &= ~0x01; // Right
         }
         this.mmu.memory[0xff00] = this.mmu.memory[0xff00] & 0xf0 | newInputs;
-        if (previousInputs & ~newInputs) {
-            this.mmu.memory[0xff0f] |= 0x08;    // request interrupt
-        }
+        // TODO implement joypad interrupt correctly
+        // if (previousInputs & ~newInputs) {
+        //     this.mmu.memory[0xff0f] |= 0x08;    // request interrupt
+        // }
 
         // FF04 - DIV - Divider Register (R/W)
         if ((this.clock & 0xff) - deltaClock < 0) {
