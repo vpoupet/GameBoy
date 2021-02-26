@@ -167,15 +167,23 @@ window.onload = function () {
 
     for (const buttonName of ["a", "b", "start", "select", "up", "down", "left", "right"]) {
         const button = document.getElementById(`button-${buttonName}`);
-        button.addEventListener("pointerdown", e => {
+        button.addEventListener("mousedown", e => {
             press(buttonName);
             e.preventDefault();
         });
-        button.addEventListener("pointerup", e => {
+        button.addEventListener("mouseup", e => {
             release(buttonName);
             e.preventDefault();
         });
-        button.addEventListener("pointerleave", e => {
+        button.addEventListener("mouseleave", e => {
+            release(buttonName);
+            e.preventDefault();
+        });
+        button.addEventListener("touchstart", e => {
+            press(buttonName);
+            e.preventDefault();
+        });
+        button.addEventListener("touchend", e => {
             release(buttonName);
             e.preventDefault();
         });
