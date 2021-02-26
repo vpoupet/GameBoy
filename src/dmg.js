@@ -38,6 +38,7 @@ class DMG {
             this.cpu.sp = 0xfffe;
             this.cpu.pc = 0x100;
             this.ppu.setDisplayEnabled(true);
+            this.ppu.clearScreen();
         }
         this.updateInfo();
     }

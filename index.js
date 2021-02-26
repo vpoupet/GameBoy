@@ -50,7 +50,8 @@ window.onload = function () {
     const canvas = document.getElementById("screen");
     canvas.width = SCREEN_WIDTH;
     canvas.height = SCREEN_HEIGHT;
-    gb.ppu.setContext(canvas.getContext('2d'));
+    const context = canvas.getContext('2d');
+    gb.ppu.setContext(context);
 
     // Keyboard events
     canvas.addEventListener("keydown", e => {

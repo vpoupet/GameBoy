@@ -1,4 +1,4 @@
-const colors = [0xFF0FBC9B, 0xFF0FAC8B, 0xFF306230, 0xFF0F380F, 0xFF9FDCCA];
+const colors = [0xFF0FBC9B, 0xFF0FAC8B, 0xFF306230, 0xFF0F380F];
 
 
 class PPU {
@@ -123,9 +123,13 @@ class PPU {
             this.isDisplayEnabled = true;
         } else {
             this.isDisplayEnabled = false;
-            this.screenContext.fillStyle = "#CADC9F";
-            this.screenContext.fillRect(0, 0, 160, 144);
+            this.clearScreen();
         }
+    }
+
+    clearScreen() {
+        this.screenContext.fillStyle = this.isDisplayEnabled ? "#9BBC0F" : "#CADC9F";
+        this.screenContext.fillRect(0, 0, 160, 144);
     }
 
     displayTiles() {
