@@ -33,6 +33,7 @@ html {
 }
 #gameboy .button {
   position: absolute;
+  touch-action: none;
 }
 #gameboy #button-a {
   top: 626px;
