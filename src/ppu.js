@@ -66,7 +66,7 @@ class PPU {
                     const winTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800) + 32 * (winY >> 3);
                     const winTileLine = winY % 8;
                     tx = _ff4b >> 3;
-                    lx = _ff4a - 7;
+                    lx = _ff4b - 7;
                     while (lx < 160) {
                         const tileIndex = this.mmu.memory[winTileMapOffset + tx];
                         const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
