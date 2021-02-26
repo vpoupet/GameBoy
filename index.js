@@ -5,14 +5,14 @@ const gb = new DMG();
 const SCREEN_WIDTH = 160;
 const SCREEN_HEIGHT = 144;
 const buttonMap = {
-    "q": "Start",
-    "w": "Select",
-    "f": "B",
-    "g": "A",
-    "ArrowUp": "Up",
-    "ArrowDown": "Down",
-    "ArrowLeft": "Left",
-    "ArrowRight": "Right",
+    "q": "start",
+    "w": "select",
+    "f": "b",
+    "g": "a",
+    "ArrowUp": "up",
+    "ArrowDown": "down",
+    "ArrowLeft": "left",
+    "ArrowRight": "right",
 }
 
 window.gb = gb;     // make accessible in the console
@@ -160,22 +160,21 @@ window.onload = function () {
                 gb.setViewAddress(gb.viewAddress - 0x80);
             });
 
-    document.getElementById("button-a").addEventListener("pointerdown", () => press('A'));
-    document.getElementById("button-a").addEventListener("pointerup", () => release('A'));
-    document.getElementById("button-b").addEventListener("pointerdown", () => press('B'));
-    document.getElementById("button-b").addEventListener("pointerup", () => release('B'));
-    document.getElementById("button-start").addEventListener("pointerdown", () => press('Start'));
-    document.getElementById("button-start").addEventListener("pointerup", () => release('Start'));
-    document.getElementById("button-select").addEventListener("pointerdown", () => press('Select'));
-    document.getElementById("button-select").addEventListener("pointerup", () => release('Select'));
-    document.getElementById("button-up").addEventListener("pointerdown", () => press('Up'));
-    document.getElementById("button-up").addEventListener("pointerup", () => release('Up'));
-    document.getElementById("button-down").addEventListener("pointerdown", () => press('Down'));
-    document.getElementById("button-down").addEventListener("pointerup", () => release('Down'));
-    document.getElementById("button-left").addEventListener("pointerdown", () => press('Left'));
-    document.getElementById("button-left").addEventListener("pointerup", () => release('Left'));
-    document.getElementById("button-right").addEventListener("pointerdown", () => press('Right'));
-    document.getElementById("button-right").addEventListener("pointerup", () => release('Right'));
+    for (const buttonName of ["a", "b", "start", "select", "up", "down", "left", "right"]) {
+        const button = document.getElementById(`button-${buttonName}`);
+        button.addEventListener("pointerdown", e => {
+            press(buttonName);
+            e.preventDefault();
+        });
+        button.addEventListener("pointerup", e => {
+            release(buttonName);
+            e.preventDefault();
+        });
+        button.addEventListener("pointerleave", e => {
+            release(buttonName);
+            e.preventDefault();
+        });
+    }
 
     reset();
     start();

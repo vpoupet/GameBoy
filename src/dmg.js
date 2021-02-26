@@ -55,17 +55,17 @@ class DMG {
         let newInputs = 0x0f;
         if ((this.mmu.memory[0xff00] & 0x20) === 0) {
             // buttons selected
-            if (pressedButtons.has("Start")) newInputs &= ~0x08;  // Start
-            if (pressedButtons.has("Select")) newInputs &= ~0x04;  // Select
-            if (pressedButtons.has("B")) newInputs &= ~0x02;  // B
-            if (pressedButtons.has("A")) newInputs &= ~0x01;  // A
+            if (pressedButtons.has("start")) newInputs &= ~0x08;  // Start
+            if (pressedButtons.has("select")) newInputs &= ~0x04;  // Select
+            if (pressedButtons.has("b")) newInputs &= ~0x02;  // B
+            if (pressedButtons.has("a")) newInputs &= ~0x01;  // A
         }
         if ((this.mmu.memory[0xff00] & 0x10) === 0) {
             // directions selected
-            if (pressedButtons.has("Down")) newInputs &= ~0x08;  // Down
-            if (pressedButtons.has("Up")) newInputs &= ~0x04;    // Up
-            if (pressedButtons.has("Left")) newInputs &= ~0x02;  // Left
-            if (pressedButtons.has("Right")) newInputs &= ~0x01; // Right
+            if (pressedButtons.has("down")) newInputs &= ~0x08;  // Down
+            if (pressedButtons.has("up")) newInputs &= ~0x04;    // Up
+            if (pressedButtons.has("left")) newInputs &= ~0x02;  // Left
+            if (pressedButtons.has("right")) newInputs &= ~0x01; // Right
         }
         this.mmu.memory[0xff00] = this.mmu.memory[0xff00] & 0xf0 | newInputs;
         // TODO implement joypad interrupt correctly
