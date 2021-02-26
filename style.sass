@@ -2,22 +2,48 @@ html
   box-sizing: border-box
   font-family: "Menlo", "Monaco", "monospace"
 
-#screen
-  background: black
-  width: 320px
+body
 
-#break-condition
-  width: 240pt
+#gameboy
+  float: left
+  width: 635px
+  height: 1052px
+  position: relative
+  #frame
+    width: 635px
+    height: 1052px
+    position: absolute
+    top: 0
+    left: 0
+  #screen-bg
+    width: 360px
+    height: 324px
+    background: #9BBC0F
+    position: absolute
+    top: 124px
+    left: 138px
+  #screen
+    position: absolute
+    background: black
+    width: 320px
+    top: 145px
+    left: 156px
 
-#previous-asm
-  color: gray
+#other
+  float: left
 
-#address
-  width: 40pt
+  #break-condition
+    width: 240pt
 
-#memory
-  thead
-    text-align: center
+  #previous-asm
+    color: gray
 
-#serial-output
-  border: black 1px solid
+  #address
+    width: 40pt
+
+  #memory
+    thead
+      text-align: center
+
+  #serial-output
+    border: black 1px solid

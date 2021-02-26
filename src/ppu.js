@@ -128,7 +128,7 @@ class PPU {
     }
 
     clearScreen() {
-        this.screenContext.fillStyle = this.isDisplayEnabled ? "#9BBC0F" : "#CADC9F";
+        this.screenContext.fillStyle = "#9BBC0F";
         this.screenContext.fillRect(0, 0, 160, 144);
     }
 

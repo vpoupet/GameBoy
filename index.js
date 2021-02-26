@@ -54,13 +54,18 @@ window.onload = function () {
     gb.ppu.setContext(context);
 
     // Keyboard events
-    canvas.addEventListener("keydown", e => {
+    window.addEventListener("keydown", e => {
         pressedKeys.add(e.key);
-        e.preventDefault();
+        if (document.activeElement === document.body &&
+            ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+            e.preventDefault();
+        }
     });
-    canvas.addEventListener("keyup", e => {
+    window.addEventListener("keyup", e => {
         pressedKeys.delete(e.key);
-        e.preventDefault();
+        if (document.activeElement === document.body) {
+            e.preventDefault();
+        }
     });
 
     // Execution buttons
@@ -146,4 +151,5 @@ window.onload = function () {
             });
 
     reset();
+    start();
 };

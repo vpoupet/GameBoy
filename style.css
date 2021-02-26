@@ -3,28 +3,51 @@ html {
   font-family: "Menlo", "Monaco", "monospace";
 }
 
-#screen {
+#gameboy {
+  float: left;
+  width: 635px;
+  height: 1052px;
+  position: relative;
+}
+#gameboy #frame {
+  width: 635px;
+  height: 1052px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#gameboy #screen-bg {
+  width: 360px;
+  height: 324px;
+  background: #9BBC0F;
+  position: absolute;
+  top: 124px;
+  left: 138px;
+}
+#gameboy #screen {
+  position: absolute;
   background: black;
   width: 320px;
+  top: 145px;
+  left: 156px;
 }
 
-#break-condition {
+#other {
+  float: left;
+}
+#other #break-condition {
   width: 240pt;
 }
-
-#previous-asm {
+#other #previous-asm {
   color: gray;
 }
-
-#address {
+#other #address {
   width: 40pt;
 }
-
-#memory thead {
+#other #memory thead {
   text-align: center;
 }
-
-#serial-output {
+#other #serial-output {
   border: black 1px solid;
 }
 
