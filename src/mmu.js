@@ -1,9 +1,24 @@
 import { MBC, MBC1 } from "./mbc.js";
 
+
 function hex(n, length = 4) {
     const nString = n.toString(16);
     return "0".repeat(length - nString.length) + nString;
 }
+
+
+function decodeBase64(b64string) {
+    const byteString = atob(b64string);
+    const len = byteString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = byteString.charCodeAt(i);
+    }
+    return bytes;
+}
+
+
+const dmgBios = decodeBase64('Mf7/ryH/nzLLfCD7ISb/DhE+gDLiDD7z4jI+d3c+/OBHEQQBIRCAGs2VAM2WABN7/jQg8xHYAAYIGhMiIwUg+T4Z6hCZIS+ZDgw9KAgyDSD5Lg8Y82c+ZFfgQj6R4EAEHgIODPBE/pAg+g0g9x0g8g4TJHweg/5iKAYewf5kIAZ74gw+h+LwQpDgQhUg0gUgTxYgGMtPBgTFyxEXwcsRFwUg9SIjIiPJzu1mZswNAAsDcwCDAAwADQAIER+IiQAO3Mxu5t3d2Zm7u2djbg7szN3cmZ+7uTM+PEK5pbmlQjwhBAERqAAaE74g/iN9/jQg9QYZeIYjBSD7hiD+PgHgUA==');
 
 
 class MMU {
@@ -18,7 +33,7 @@ class MMU {
          * 256 bytes array containing the BIOS instructions
          * @type {Uint8Array}
          */
-        this.bios = undefined;
+        this.bios = dmgBios;
         this.isBiosEnabled = false;
         this.mbc = undefined;
         this.romBank0 = undefined;
@@ -167,7 +182,6 @@ class MMU {
                 if ((this.memory[addr] & 0x01) === 0 && (val & 0x01) === 1) {
                     this.isBiosEnabled = false;
                     this.memory[addr] |= 0x01;
-                    console.log("Boot ROM disabled.");
                 }
                 break;
             default:
@@ -214,8 +228,9 @@ class MMU {
         this.set(addr + 1, val >> 8);
     }
 
-    reset(cartridge, bios=undefined) {
-        this.bios = bios;
+    reset(cartridge, execBios=true) {
+        this.isBiosEnabled = execBios;
+
         switch (cartridge[0x0147]) {
             case 0x00:
                 this.mbc = new MBC(this, cartridge);
@@ -236,14 +251,8 @@ class MMU {
             this.memory[i] = 0x00;
         }
 
-        // load BIOS or set values after boot sequence
-        if (bios) {
-            this.isBiosEnabled = true;
-            for (let i = 0; i < 256; i++) {
-                this.memory[i] = bios[i];
-            }
-        } else {
-            this.isBiosEnabled = false;
+        if (!execBios) {
+            // set values after boot sequence (from Pan Docs)
             this.memory[0xff05] = 0x00;
             this.memory[0xff06] = 0x00;
             this.memory[0xff07] = 0x00;

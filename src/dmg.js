@@ -21,15 +21,20 @@ class DMG {
         this.shouldUpdateEachFrame = false;
         this.requestID = undefined;
         this.lcdcStatus = false;
-
         this.viewAddress = 0;
     }
 
-    reset(cartridge, bios=undefined) {
+    loadRom(romFile, execBios=true) {
+        fetch(romFile)
+            .then(response => response.arrayBuffer())
+            .then(data => this.reset(new Uint8Array(data), execBios));
+    }
+
+    reset(cartridge, execBios=true) {
         this.clock = 0;
-        this.mmu.reset(cartridge, bios);
+        this.mmu.reset(cartridge, execBios);
         this.cpu.reset();
-        if (bios) {
+        if (execBios) {
             this.ppu.setDisplayEnabled(false);
         } else {
             this.cpu.af = 0x01b0;

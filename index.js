@@ -1,5 +1,4 @@
 import {DMG, pressedButtons} from "./src/dmg.js";
-import {roms} from "./src/roms.js";
 
 const gb = new DMG();
 const SCREEN_WIDTH = 160;
@@ -50,8 +49,8 @@ function stop() {
 function reset() {
     document.getElementById("serial-output").innerText = "";
     const romSelect = document.getElementById("rom-select");
-    const bios = document.getElementById("skip-boot").checked ? undefined : roms['bios'];
-    gb.reset(roms[romSelect.value], bios);
+    const skipBoot = document.getElementById("skip-boot").checked;
+    gb.loadRom(`rom/${romSelect.value}.gb`, !skipBoot);
     gb.updateInfo();
 }
 
