@@ -40,6 +40,7 @@ class MMU {
         this.romBank1 = undefined;
         this.externalRamEnabled = false;
         this.externalRam = undefined;
+        this.dmaTimer = 0;
     }
 
     /**
@@ -48,6 +49,8 @@ class MMU {
      * @returns {number} a byte
      */
     get(addr) {
+        if (this.dmaTimer > 0 && addr < 0xff80) return 0xff; // during OAM DMA transfer only HRAM can be accessed
+
         switch (addr) {
             case 0xff00:
                 // 0xFF00 - P1 - Joypad/Super Game Boy communication register
@@ -132,6 +135,8 @@ class MMU {
      * @param val {number} value of the byte
      */
     set(addr, val) {
+        if (this.dmaTimer > 0 && addr < 0xff80) return; // during OAM DMA transfer only HRAM can be accessed
+
         switch (addr) {
             case 0xff00:
                 // FF00 - P1/JOYP - Joypad (R/W)
@@ -175,7 +180,7 @@ class MMU {
                 for (let i = 0; i < 160; i++) {
                     this.memory[0xfe00 + i] = this.memory[offset + i];
                 }
-                // TODO lock access to memory during 160 cycles
+                this.dmaTimer = 160;
                 break;
             case 0xff50:
                 // FF50		Set bit-0 to 1 to disable Boot ROM (can only transition from 0 to 1)

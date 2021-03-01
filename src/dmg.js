@@ -98,6 +98,11 @@ class DMG {
             }
         }
 
+        // DMA Timer
+        if (this.mmu.dmaTimer > 0) {
+            this.mmu.dmaTimer -= deltaClock;
+        }
+
         const lineClock = this.clock % 456;
         const frameClock = this.clock % 70224;
         // FF44 - LY - LCDC Y-Coordinate (R)
