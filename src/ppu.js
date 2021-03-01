@@ -58,14 +58,14 @@ class PPU {
             }
             if (_ff40 & 0x20) {
                 // draw Window
-                const _ff4a = this.mmu.memory[0xff4a];  // WY - Window Y Position
-                const _ff4b = this.mmu.memory[0xff4b];  // WX - Window X Position minus 7
+                const _ff4a = this.mmu.memory[0xff4a];  // WY (Window Y Position) (R/W)
+                const _ff4b = this.mmu.memory[0xff4b];  // WX (Window X Position + 7) (R/W)
                 if (_ff4a <= ly) {
                     // Window is shown on current line
                     const winY = ly - _ff4a;
                     const winTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800) + 32 * (winY >> 3);
                     const winTileLine = winY % 8;
-                    tx = _ff4b >> 3;
+                    tx = 0;
                     lx = _ff4b - 7;
                     while (lx < 160) {
                         const tileIndex = this.mmu.memory[winTileMapOffset + tx];
