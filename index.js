@@ -51,7 +51,6 @@ function reset() {
     const romSelect = document.getElementById("rom-select");
     const skipBoot = document.getElementById("skip-boot").checked;
     gb.loadRom(`rom/${romSelect.value}.gb`, !skipBoot);
-    // gb.updateInfo();
 }
 
 window.onload = function () {
@@ -189,7 +188,6 @@ window.onload = function () {
     }
 
     reset();
-    start();
 };
 
 function press(buttonName) {
