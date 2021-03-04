@@ -142,6 +142,7 @@ class DMG {
 
         // Set this.isNewFrame at beginning of frame
         if (frameClock - deltaClock < 0) {
+            this.ppu.startFrame();
             this.isNewFrame = true;
         }
 

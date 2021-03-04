@@ -15,12 +15,19 @@ class PPU {
         this.dmg = dmg;
         this.mmu = dmg.mmu;
         this.enabled = true;
+        this.windowLine = 0;
+        this.winY = 0;
     }
 
     setContext(context) {
         this.screenContext = context;
         this.lineData = this.screenContext.createImageData(160, 1);
         this.lineArray = new Uint32Array(this.lineData.data.buffer);
+    }
+
+    startFrame() {
+        this.windowLine = 0;
+        this.winY = this.mmu.memory[0xff4a];
     }
 
     fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency = false, flip = false) {
@@ -75,15 +82,13 @@ class PPU {
             }
             if (_ff40 & 0x20) {
                 // draw Window
-                const _ff4a = this.mmu.memory[0xff4a];  // WY (Window Y Position) (R/W)
-                const _ff4b = this.mmu.memory[0xff4b];  // WX (Window X Position + 7) (R/W)
-                if (_ff4a <= ly) {
+                const winX = this.mmu.memory[0xff4b] - 7;  // FF4B - WX (Window X Position + 7) (R/W)
+                if (this.winY <= ly && winX < 160) {
                     // Window is shown on current line
-                    const winY = ly - _ff4a;
-                    const winTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800) + 32 * (winY >> 3);
-                    const winTileLine = winY % 8;
+                    const winTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800) + 32 * (this.windowLine >> 3);
+                    const winTileLine = this.windowLine % 8;
                     tx = 0;
-                    lx = _ff4b - 7;
+                    lx = winX;
                     while (lx < 160) {
                         const tileIndex = this.mmu.memory[winTileMapOffset + tx];
                         const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
@@ -92,6 +97,7 @@ class PPU {
                         tx %= 32;
                         lx += 8;
                     }
+                    this.windowLine += 1;
                 }
             }
         } else {

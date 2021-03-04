@@ -25,26 +25,38 @@
     <div id="other">
       <div id="rom">
         <select id="rom-select" name="rom">
-          <option value="Tetris">Tetris</option>
-          <option value="Dr. Mario">Dr. Mario</option>
-          <option value="Kirby's Dream Land" selected>Kirby's Dream Land</option>
-          <option value="Super Mario Land">Super Mario Land</option>
-          <!--option(value="Super Mario Land 2") Super Mario Land 2-->
-          <option value="The Legend of Zelda - Link's Awakening">The Legend of Zelda - Link's Awakening</option>
-          <option value="Batman">Batman</option>
-          <option value="Bubble Ghost">Bubble Ghost</option>
-          <!--option(value="Gargoyle's Quest") Gargoyle's Quest-->
-          <!--option(value="Golf") Golf-->
-          <option value="Tennis">Tennis</option>
-          <option value="Hyper Lode Runner">Hyper Lode Runner</option>
-          <option value="Mega Man">Mega Man</option>
-          <!--option(value="Pokemon Blue") Pokemon Blue-->
-          <!--option(value="Pokemon Red") Pokemon Red-->
-          <option value="Robocop">Robocop</option>
-          <option value="Robocop 2">Robocop 2</option>
-          <option value="Teenage Mutant Ninja Turtles">Teenage Mutant Ninja Turtles</option>
-          <option value="Teenage Mutant Ninja Turtles 2">Teenage Mutant Ninja Turtles 2</option>
-          <option value="The Simpsons">The Simpsons</option>
+          <optgroup label="Games">
+            <option value="Tetris">Tetris</option>
+            <option value="Dr. Mario">Dr. Mario</option>
+            <option value="Kirby's Dream Land" selected>Kirby's Dream Land</option>
+            <option value="Super Mario Land">Super Mario Land</option>
+            <!--option(value="Super Mario Land 2") Super Mario Land 2-->
+            <option value="The Legend of Zelda - Link's Awakening">The Legend of Zelda - Link's Awakening</option>
+            <option value="Batman">Batman</option>
+            <option value="Bubble Ghost">Bubble Ghost</option>
+            <!--option(value="Gargoyle's Quest") Gargoyle's Quest-->
+            <!--option(value="Golf") Golf-->
+            <option value="Tennis">Tennis</option>
+            <option value="Hyper Lode Runner">Hyper Lode Runner</option>
+            <option value="Mega Man">Mega Man</option>
+            <option value="Marble Madness">Marble Madness</option>
+            <!--option(value="Pokemon Blue") Pokemon Blue-->
+            <!--option(value="Pokemon Red") Pokemon Red-->
+            <option value="Robocop">Robocop</option>
+            <option value="Robocop 2">Robocop 2</option>
+            <option value="Teenage Mutant Ninja Turtles">Teenage Mutant Ninja Turtles</option>
+            <option value="Teenage Mutant Ninja Turtles 2">Teenage Mutant Ninja Turtles 2</option>
+            <option value="The Simpsons">The Simpsons</option>
+          </optgroup>
+          <optgroup label="Tests">
+            <option value="cputest">Blargg CPU Test</option>
+            <option value="interrupt_test">Blargg Interrupt Test</option>
+            <option value="inst_timing_test">Blargg Instruction Timing Test</option>
+            <option value="mem_timing_test">Blargg Memory Timing Test</option>
+            <option value="mem_timing_test2">Blargg Memory Timing Test 2</option>
+            <option value="merken">Merken Demo</option>
+            <option value="dmg-acid2">Acid2 PPU Test</option>
+          </optgroup>
         </select>
         <input id="skip-boot" type="checkbox" name="skip-boot">
         <label for="skip-boot">Skip boot</label>
