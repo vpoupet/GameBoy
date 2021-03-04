@@ -116,7 +116,9 @@ class DMG {
         let mode;
         if (frameClock >= 65664) {
             mode = 1;   // V-blank (4560 cycles)
-            this.mmu.memory[0xff0f] |= 0x01;    // request V-Blank interrupt
+            if (frameClock - deltaClock < 65664) {
+                this.mmu.memory[0xff0f] |= 0x01;    // request V-Blank interrupt
+            }
         } else if (lineClock < 80) {
             mode = 2;   // Reading from OAM (80 cycles)
         } else if (lineClock < 252) {
