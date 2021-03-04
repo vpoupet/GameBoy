@@ -79,8 +79,8 @@ class PPU {
             }
         } else {
             // clear line
-            for (let i = 0; i < 160; i++) { // clear line
-                this.lineData[i] = colors[0];
+            for (let i = 0; i < 160; i++) {
+                this.lineArray[i] = colors[0];
             }
         }
 
