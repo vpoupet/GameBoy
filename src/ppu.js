@@ -1,11 +1,19 @@
-const colors = [0xFF0FBC9B, 0xFF0FAC8B, 0xFF306230, 0xFF0F380F];
+/**
+ * Screen colors as "web" hex values, from lightest to darkest
+ * @type {string[]}
+ */
+const hexColors = ["#9BBC0F", "#8BAC0F", "#306230", "#0F380F"];
+/**
+ * Screen colors, as UInt32
+ * @type {number[]}
+ */
+const colors = hexColors.map(h => Number("0xFF" + h.slice(5, 7) + h.slice(3, 5) + h.slice(1, 3)));
 
 
 class PPU {
     constructor(dmg) {
         this.dmg = dmg;
         this.mmu = dmg.mmu;
-        this.isDisplayEnabled = false;
         this.enabled = true;
     }
 
@@ -15,13 +23,13 @@ class PPU {
         this.lineArray = new Uint32Array(this.lineData.data.buffer);
     }
 
-    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency=false, flip=false) {
+    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency = false, flip = false) {
         const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
         const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
         for (let i = 0; i < 8; i++) {
             const j = 7 - i;
             const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
-            if (shade !== 0 || !transparency) {
+            if (shade !== 0 || !transparency) {
                 if (flip) {
                     buffer[bufferOffset + 7 - i] = colors[palette[shade]];
                 } else {
@@ -36,8 +44,17 @@ class PPU {
     }
 
     drawLine(ly) {
-        if (!this.enabled || !this.isDisplayEnabled) return;
         const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
+
+        if ((_ff40 & 0x80) === 0) {
+            // display is not enabled: clear line and return
+            for (let i = 0; i < 160; i++) {
+                this.lineArray[i] = colors[0];
+            }
+            this.screenContext.putImageData(this.lineData, 0, ly);
+            return
+        }
+
         if (_ff40 & 0x01) {
             // draw BG
             const _ff42 = this.mmu.memory[0xff42];  // SCY - Scroll Y
@@ -116,15 +133,6 @@ class PPU {
             }
         }
         this.screenContext.putImageData(this.lineData, 0, ly);
-    }
-
-    setDisplayEnabled(val) {
-        if (val) {
-            this.isDisplayEnabled = true;
-        } else {
-            this.isDisplayEnabled = false;
-            this.clearScreen();
-        }
     }
 
     clearScreen() {

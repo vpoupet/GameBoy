@@ -9,8 +9,20 @@ const pressedButtons = new Set();
 
 class DMG {
     constructor() {
+        /**
+         * Memory Management Unit
+         * @type {MMU}
+         */
         this.mmu = new MMU(this);
+        /**
+         * Central Processing Unit
+         * @type {CPU}
+         */
         this.cpu = new CPU(this);
+        /**
+         * Pixel Processing Unit
+         * @type {PPU}
+         */
         this.ppu = new PPU(this);
         /**
          * Clock counter
@@ -34,16 +46,13 @@ class DMG {
         this.clock = 0;
         this.mmu.reset(cartridge, execBios);
         this.cpu.reset();
-        if (execBios) {
-            this.ppu.setDisplayEnabled(false);
-        } else {
+        if (!execBios) {
             this.cpu.af = 0x01b0;
             this.cpu.bc = 0x0013;
             this.cpu.de = 0x00d8;
             this.cpu.hl = 0x014d;
             this.cpu.sp = 0xfffe;
             this.cpu.pc = 0x100;
-            this.ppu.setDisplayEnabled(true);
             this.ppu.clearScreen();
         }
         this.updateInfo();
@@ -123,14 +132,14 @@ class DMG {
             mode = 2;   // Reading from OAM (80 cycles)
         } else if (lineClock < 252) {
             mode = 3;   // Reading from OAM and VRAM (172 cycles)
+            if (lineClock - deltaClock < 80 && this.ppu.enabled) {
+                this.ppu.drawLine(_ff44);    // draw line at beginning of mode 3
+            }
         } else {
             mode = 0;   // H-Blank (204 cycles)
         }
         this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | mode;
-        // Draw line at beginning of mode 3
-        if (mode === 3 && lineClock - deltaClock < 80) {
-            this.ppu.drawLine(_ff44);
-        }
+
         // Set this.isNewFrame at beginning of frame
         if (frameClock - deltaClock < 0) {
             this.isNewFrame = true;

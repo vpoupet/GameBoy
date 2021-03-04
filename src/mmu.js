@@ -152,19 +152,6 @@ class MMU {
                 // reset to 0 on write
                 this.memory[addr] = 0;
                 break;
-            case 0xff40:
-                // FF40 - LCD Control Register
-                // 7	LCD Display Enable	0=Off, 1=On
-                // 6	Window Tile Map Display Select	0=9800-9BFF, 1=9C00-9FFF
-                // 5	Window Display Enable	0=Off, 1=On
-                // 4	BG & Window Tile Data Select	0=8800-97FF, 1=8000-8FFF
-                // 3	BG Tile Map Display Select	0=9800-9BFF, 1=9C00-9FFF
-                // 2	OBJ (Sprite) Size	0=Off, 1=On
-                // 1	OBJ (Sprite) Display Enable	0=Off, 1=On
-                // 0	BG/Window Display/Priority	0=Off, 1=On
-                this.dmg.ppu.setDisplayEnabled(val & 0x80);
-                this.memory[addr] = val;
-                break;
             case 0xff41:
                 // FF41 - STAT - LCDC Status (R/W)
                 // bit 7 is unused (always returns 1)
