@@ -88,11 +88,12 @@ class MMU {
                 } else if (0x8000 <= addr && addr < 0xa000) {
                     // 8000	9FFF	8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode Switchable bank 0/1 in CGB mode
                     // VRAM (memory at 8000h-9FFFh) is accessible during Mode 0-2
-                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
+                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
+                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
                         return this.memory[addr];
-                    } else {
-                        return 0xff;
-                    }
+                    // } else {
+                    //     return 0xff;
+                    // }
                 } else if (0xa000 <= addr && addr < 0xc000) {
                     // A000	BFFF	8 KiB External RAM	From cartridge, switchable bank if any
                     if (this.externalRamEnabled) {
@@ -106,11 +107,12 @@ class MMU {
                 } else if (0xfe00 <= addr && addr < 0xfea0) {
                     // FE00	FE9F	Sprite attribute table (OAM)
                     // OAM (memory at FE00h-FE9Fh) is accessible during Mode 0-1
-                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
+                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
+                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
                         return this.memory[addr];
-                    } else {
-                        return 0xff;
-                    }
+                    // } else {
+                    //     return 0xff;
+                    // }
                 } else if (0xfea0 <= addr && addr < 0xff00) {
                     // FEA0	FEFF	Not Usable	Nintendo says use of this area is prohibited
                     return 0xff;
@@ -184,9 +186,10 @@ class MMU {
                 } else if (0x8000 <= addr && addr < 0xa000) {
                     // 8000	9FFF	8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode Switchable bank 0/1 in CGB mode
                     // VRAM (memory at 8000h-9FFFh) is accessible during Mode 0-2
-                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
+                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
+                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
                         this.memory[addr] = val;
-                    }
+                    // }
                 } else if (0xa000 <= addr && addr < 0xc000) {
                     // A000	BFFF	8 KiB External RAM	From cartridge, switchable bank if any
                     if (this.externalRamEnabled) {
@@ -198,9 +201,10 @@ class MMU {
                 } else if (0xfe00 <= addr && addr < 0xfea0) {
                     // FE00	FE9F	Sprite attribute table (OAM)
                     // OAM (memory at FE00h-FE9Fh) is accessible during Mode 0-1
-                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
+                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
+                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
                         this.memory[addr] = val;
-                    }
+                    // }
                 } else if (0xfea0 <= addr && addr < 0xff00) {
                     // FEA0	FEFF	Not Usable	Nintendo says use of this area is prohibited
                     return;
