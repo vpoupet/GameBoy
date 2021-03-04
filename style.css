@@ -26,7 +26,7 @@ html {
 }
 #gameboy #screen {
   position: absolute;
-  background: black;
+  background: none;
   width: 320px;
   top: 145px;
   left: 156px;
