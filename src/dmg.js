@@ -45,16 +45,8 @@ class DMG {
     reset(cartridge, execBios=true) {
         this.clock = 0;
         this.mmu.reset(cartridge, execBios);
-        this.cpu.reset();
-        if (!execBios) {
-            this.cpu.af = 0x01b0;
-            this.cpu.bc = 0x0013;
-            this.cpu.de = 0x00d8;
-            this.cpu.hl = 0x014d;
-            this.cpu.sp = 0xfffe;
-            this.cpu.pc = 0x100;
-            this.ppu.clearScreen();
-        }
+        this.cpu.reset(execBios);
+        this.ppu.reset();
         this.updateInfo();
     }
 

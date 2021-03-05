@@ -219,14 +219,22 @@ class CPU {
         return this.clock;
     }
 
-    reset() {
-        this.af = 0;
-        this.bc = 0;
-        this.de = 0;
-        this.hl = 0;
-        this.pc = 0;
-        this.sp = 0;
-        this.clock = 0;
+    reset(execBios = true) {
+        if (execBios) {
+            this.af = 0;
+            this.bc = 0;
+            this.de = 0;
+            this.hl = 0;
+            this.sp = 0;
+            this.pc = 0;
+        } else {
+            this.af = 0x01b0;
+            this.bc = 0x0013;
+            this.de = 0x00d8;
+            this.hl = 0x014d;
+            this.sp = 0xfffe;
+            this.pc = 0x100;
+        }
         this.interruptMasterEnable = false;
         this.previousPC = new Array(5).fill(0);
     }

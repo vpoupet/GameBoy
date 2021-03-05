@@ -141,7 +141,7 @@ class PPU {
         this.screenContext.putImageData(this.lineData, 0, ly);
     }
 
-    clearScreen() {
+    reset() {
         this.screenContext.fillStyle = "#9BBC0F";
         this.screenContext.fillRect(0, 0, 160, 144);
     }
