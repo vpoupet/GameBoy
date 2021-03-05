@@ -115,7 +115,7 @@ class MMU {
                     // }
                 } else if (0xfea0 <= addr && addr < 0xff00) {
                     // FEA0	FEFF	Not Usable	Nintendo says use of this area is prohibited
-                    return 0xff;
+                    return 0x00;
                 } else {
                     return this.memory[addr];
                 }
