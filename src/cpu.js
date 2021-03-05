@@ -1,6 +1,5 @@
 import {
     opCodes,
-    opCodesCB,
 } from "./opcodes.js"
 
 class CPU {
@@ -24,6 +23,7 @@ class CPU {
          * @type {boolean}
          */
         this.interruptMasterEnable = false;
+        this.delayEnableInterrupt = false;
         this.clock = 0;
         this.previousPC = new Array(5).fill(0);
     }
@@ -180,24 +180,26 @@ class CPU {
     }
 
     exec() {
+        this.delayEnableInterrupt = false;
         this.clock = 0;
-        const previousInterruptMasterEnable = this.interruptMasterEnable;
 
-        // execute opcode at pc
+        // handle HALT mode
         if (this.isHalted) {
             if (this.mmu.memory[0xffff] & this.mmu.memory[0xff0f] & 0x1f) {
                 this.isHalted = false;
             } else {
                 this.clock += 4;
+                return this.clock;
             }
         } else {
+            // execute opcode at pc
             this.previousPC.shift();
             this.previousPC.push(this.pc);
             opCodes[this.mmu.get(this.pc)].bind(this)();
         }
 
-        if (this.interruptMasterEnable && previousInterruptMasterEnable) {
-            // check for interrupts
+        // process interrupts
+        if (this.interruptMasterEnable && !this.delayEnableInterrupt) {
             const interruptMask = this.mmu.memory[0xffff] & this.mmu.memory[0xff0f] & 0x1f;
             if (interruptMask) {
                 // execute interrupt

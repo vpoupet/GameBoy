@@ -1,3 +1,5 @@
+.idea/
+venv/
 node_modules/
 coverage/
 

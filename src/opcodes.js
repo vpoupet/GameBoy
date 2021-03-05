@@ -2538,7 +2538,8 @@ const opCodes = [
         // FB - EI
         // 1  4
         // - - - -
-        this.interruptMasterEnable = true
+        this.interruptMasterEnable = true;
+        this.delayEnableInterrupt = true;
         this.pc += 1;
         this.clock += 4;
     },
