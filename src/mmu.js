@@ -88,12 +88,11 @@ class MMU {
                 } else if (0x8000 <= addr && addr < 0xa000) {
                     // 8000	9FFF	8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode Switchable bank 0/1 in CGB mode
                     // VRAM (memory at 8000h-9FFFh) is accessible during Mode 0-2
-                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
-                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
+                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
                         return this.memory[addr];
-                    // } else {
-                    //     return 0xff;
-                    // }
+                    } else {
+                        return 0xff;
+                    }
                 } else if (0xa000 <= addr && addr < 0xc000) {
                     // A000	BFFF	8 KiB External RAM	From cartridge, switchable bank if any
                     if (this.externalRamEnabled) {
@@ -107,12 +106,11 @@ class MMU {
                 } else if (0xfe00 <= addr && addr < 0xfea0) {
                     // FE00	FE9F	Sprite attribute table (OAM)
                     // OAM (memory at FE00h-FE9Fh) is accessible during Mode 0-1
-                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
-                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
+                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
                         return this.memory[addr];
-                    // } else {
-                    //     return 0xff;
-                    // }
+                    } else {
+                        return 0xff;
+                    }
                 } else if (0xfea0 <= addr && addr < 0xff00) {
                     // FEA0	FEFF	Not Usable	Nintendo says use of this area is prohibited
                     return 0x00;
@@ -154,6 +152,12 @@ class MMU {
                 // reset to 0 on write
                 this.memory[addr] = 0;
                 break;
+            case 0xff40:
+                // FF40 - LCD Control Register (R/W)
+                // 7	LCD Display Enable	0=Off, 1=On
+                this.memory[addr] = val;
+                this.dmg.ppu.setEnabled(!!(val & 0x80));
+                break;
             case 0xff41:
                 // FF41 - STAT - LCDC Status (R/W)
                 // bit 7 is unused (always returns 1)
@@ -162,6 +166,11 @@ class MMU {
                 break;
             case 0xff44:
                 // FF44 - LY - LCDC Y-Coordinate (R)
+                break;
+            case 0xff45:
+                // FF45 - LYC (LY Compare) (R/W)
+                this.memory[addr] = val;
+                this.dmg.ppu.updateCoincidenceFlag();
                 break;
             case 0xff46:
                 // FF46 - DMA - DMA Transfer and Start Address (R/W)
@@ -186,10 +195,9 @@ class MMU {
                 } else if (0x8000 <= addr && addr < 0xa000) {
                     // 8000	9FFF	8KB Video RAM (VRAM)	Only bank 0 in Non-CGB mode Switchable bank 0/1 in CGB mode
                     // VRAM (memory at 8000h-9FFFh) is accessible during Mode 0-2
-                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
-                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
+                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x03) !== 0x03) {
                         this.memory[addr] = val;
-                    // }
+                    }
                 } else if (0xa000 <= addr && addr < 0xc000) {
                     // A000	BFFF	8 KiB External RAM	From cartridge, switchable bank if any
                     if (this.externalRamEnabled) {
@@ -201,10 +209,9 @@ class MMU {
                 } else if (0xfe00 <= addr && addr < 0xfea0) {
                     // FE00	FE9F	Sprite attribute table (OAM)
                     // OAM (memory at FE00h-FE9Fh) is accessible during Mode 0-1
-                    // TODO: reactivate VRam access control (doesn't work with Mega Man)
-                    // if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
+                    if ((this.memory[0xff40] & 0x80) === 0 || (this.memory[0xff41] & 0x02) === 0) {
                         this.memory[addr] = val;
-                    // }
+                    }
                 } else if (0xfea0 <= addr && addr < 0xff00) {
                     // FEA0	FEFF	Not Usable	Nintendo says use of this area is prohibited
                     return;

@@ -104,55 +104,9 @@ class DMG {
             this.mmu.dmaTimer -= deltaClock;
         }
 
-        const lineClock = this.clock % 456;
-        const frameClock = this.clock % 70224;
-        // FF44 - LY - LCDC Y-Coordinate (R)
-        if (lineClock - deltaClock < 0) {
-            this.mmu.memory[0xff44] += 1;
-            this.mmu.memory[0xff44] %= 154;
-        }
-        const _ff44 = this.mmu.memory[0xff44];
-        // FF41 - STAT - LCDC Status (R/W)
-        // Update LCD Mode Flag (bits 0-1)
-        let mode;
-        if (frameClock >= 65664) {
-            mode = 1;   // V-blank (4560 cycles)
-            if (frameClock - deltaClock < 65664) {
-                this.mmu.memory[0xff0f] |= 0x01;    // request V-Blank interrupt
-            }
-        } else if (lineClock < 80) {
-            mode = 2;   // Reading from OAM (80 cycles)
-        } else if (lineClock < 252) {
-            mode = 3;   // Reading from OAM and VRAM (172 cycles)
-            if (lineClock - deltaClock < 80 && this.ppu.enabled) {
-                this.ppu.drawLine(_ff44);    // draw line at beginning of mode 3
-            }
-        } else {
-            mode = 0;   // H-Blank (204 cycles)
-        }
-        this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | mode;
-
-        // Set this.isNewFrame at beginning of frame
-        if (frameClock - deltaClock < 0) {
-            this.ppu.startFrame();
-            this.isNewFrame = true;
-        }
-
-        // Update Coincidence Flag (bit 2)
-        if (_ff44 === this.mmu.memory[0xff45]) {
-            this.mmu.memory[0xff41] |= 0x04;    // set coincidence flag
-        } else {
-            this.mmu.memory[0xff41] &= 0xfb;    // reset coincidence flag
-        }
-        // Update Interrupts
-        const previousStatus = this.lcdcStatus;
-        const _ff41 = this.mmu.memory[0xff41];
-        this.lcdcStatus = (_ff41 & 0x40) && _ff44 === this.mmu.memory[0xff45]
-            || (_ff41 & 0x20) && (_ff41 & 0x03) === 2
-            || (_ff41 & 0x10) && (_ff41 & 0x03) === 1
-            || (_ff41 & 0x08) && (_ff41 & 0x03) === 0;
-        if (!previousStatus && this.lcdcStatus) {
-            this.mmu.memory[0xff0f] |= 0x02;    // request interrupt
+        // Update PPU
+        if (this.ppu.enabled) {
+            this.ppu.update(deltaClock);
         }
     }
 

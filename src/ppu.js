@@ -16,7 +16,10 @@ class PPU {
         this.mmu = dmg.mmu;
         this.enabled = true;
         this.windowLine = 0;
+        this.mode = 0;
         this.winY = 0;
+        this.lcdcStatus = false;
+        this.clock = 0;
     }
 
     setContext(context) {
@@ -25,9 +28,81 @@ class PPU {
         this.lineArray = new Uint32Array(this.lineData.data.buffer);
     }
 
+    setEnabled(val) {
+        // TODO: check what happens when display disabled
+        if (val && !this.enabled) {
+            // disable
+            this.mmu.memory[0xff44] = 0;
+            this.updateCoincidenceFlag();
+            this.clock = 0;
+            this.setMode(0);
+            this.clearScreen();
+        }
+        this.enabled = val;
+    }
+
+    setMode(val) {
+        this.mode = val;
+        this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | val;
+    }
+
+    updateCoincidenceFlag() {
+        if (this.mmu.memory[0xff44] === this.mmu.memory[0xff45]) {
+            this.mmu.memory[0xff41] |= 0x04;    // set coincidence flag
+        } else {
+            this.mmu.memory[0xff41] &= 0xfb;    // reset coincidence flag
+        }
+    }
+
     startFrame() {
         this.windowLine = 0;
         this.winY = this.mmu.memory[0xff4a];
+        this.dmg.isNewFrame = true;
+    }
+
+    update(deltaClock) {
+        this.clock += deltaClock;
+        const lineClock = this.clock % 456;
+        const frameClock = this.clock % 70224;
+
+        // FF44 - LY - LCDC Y-Coordinate (R)
+        if (lineClock - deltaClock < 0) {
+            this.mmu.memory[0xff44] = (this.mmu.memory[0xff44] + 1) % 154;
+            this.updateCoincidenceFlag();
+        }
+
+        // FF41 - STAT - LCDC Status (R/W)
+        // Update LCD Mode Flag (bits 0-1)
+        if (frameClock >= 65664) {
+            // in V-Blank
+            if (frameClock - deltaClock < 65664) {
+                this.setMode(1);
+                this.mmu.memory[0xff0f] |= 0x01;    // request V-Blank interrupt
+            }
+        } else if (lineClock - deltaClock < 0) {
+            this.setMode(2);    // Reading from OAM (80 cycles)
+        } else if (80 <= lineClock && lineClock - deltaClock < 80) {
+            this.setMode(3);    // Reading from OAM and VRAM (172 cycles)
+            this.drawLine(this.mmu.memory[0xff44]);    // draw line at beginning of mode 3
+        } else if (252 <= lineClock && lineClock - deltaClock < 252) {
+            this.setMode(0);    // H-Blank (204 cycles)
+        }
+
+        // Set this.isNewFrame at beginning of frame
+        if (frameClock - deltaClock < 0) {
+            this.startFrame();
+        }
+
+        // Update Interrupts
+        const previousStatus = this.lcdcStatus;
+        const _ff41 = this.mmu.memory[0xff41];
+        this.lcdcStatus = (_ff41 & 0x40) && this.mmu.memory[0xff44] === this.mmu.memory[0xff45]
+            || (_ff41 & 0x20) && this.mode === 2
+            || (_ff41 & 0x10) && this.mode === 1
+            || (_ff41 & 0x08) && this.mode === 0;
+        if (!previousStatus && this.lcdcStatus) {
+            this.mmu.memory[0xff0f] |= 0x02;    // request interrupt
+        }
     }
 
     fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency = false, flip = false) {
@@ -142,6 +217,10 @@ class PPU {
     }
 
     reset() {
+        this.clearScreen();
+    }
+
+    clearScreen() {
         this.screenContext.fillStyle = "#9BBC0F";
         this.screenContext.fillRect(0, 0, 160, 144);
     }
