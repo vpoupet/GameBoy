@@ -81,9 +81,8 @@ class DMG {
         // }
 
         // FF04 - DIV - Divider Register (R/W)
-        if ((this.clock & 0xff) - deltaClock < 0) {
-            this.mmu.memory[0xff04] += 1;
-        }
+        const div = this.mmu.dataView.getInt16(0xff03, true);
+        this.mmu.dataView.setUint16(0xff03, div + deltaClock, true);
         // FF05 - TIMA - Timer counter (R/W)
         // FF06 - TMA - Timer Modulo (R/W)
         // FF07 - TAC - Timer Control (R/W)

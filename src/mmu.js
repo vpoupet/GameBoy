@@ -29,6 +29,7 @@ class MMU {
          * @type {Uint8Array}
          */
         this.memory = new Uint8Array(new ArrayBuffer(0x10000));
+        this.dataView = new DataView(this.memory.buffer);
         /**
          * 256 bytes array containing the BIOS instructions
          * @type {Uint8Array}
@@ -147,10 +148,12 @@ class MMU {
                 this.dmg.appendToSerialOutput(val);
                 this.memory[addr] = val;
                 break;
+            case 0xff03:
             case 0xff04:
                 // FF04 - DIV - Divider Register (R/W)
                 // reset to 0 on write
-                this.memory[addr] = 0;
+                this.memory[0xff03] = 0;
+                this.memory[0xff04] = 0;
                 break;
             case 0xff40:
                 // FF40 - LCD Control Register (R/W)
