@@ -288,9 +288,10 @@ class PPU {
     searchOAM() {
         this.objSize = this.mmu.memory[0xff40] & 0x04 ? 16 : 8;
         this.lineObjects = [];
+        const ly = this.mmu.memory[0xff44];
         for (let offset = 0xfe00; offset < 0xfea0; offset += 4) {
             const objY = this.mmu.memory[offset] - 16;
-            if (objY <= this.ly && this.ly < objY + this.objSize) {
+            if (objY <= ly && ly < objY + this.objSize) {
                 let tileIndex = this.mmu.memory[offset + 2];
                 if (this.objSize === 16) tileIndex &= 0xfe;
                 this.lineObjects.push({
@@ -302,17 +303,6 @@ class PPU {
                 if (this.lineObjects.length >= 10) break;
             }
         }
-    }
-
-    initMode3() {
-        this.winX = this.mmu.memory[0xff4b] - 7;  // FF4B - WX (Window X Position + 7) (R/W)
-        this.fetchBGArray = [];
-        this.fetchSpriteArray = [];
-        this.dots = 0;
-    }
-
-    drawDots() {
-
     }
 }
 
