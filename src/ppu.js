@@ -20,12 +20,18 @@ class PPU {
         this.winY = 0;
         this.lcdcStatus = false;
         this.clock = 0;
+        this.shouldDrawLines = true;
     }
 
     setContext(context) {
         this.screenContext = context;
         this.lineData = this.screenContext.createImageData(160, 1);
         this.lineArray = new Uint32Array(this.lineData.data.buffer);
+        this.screenData = this.screenContext.createImageData(160, 144);
+        this.screenArray = new Uint32Array(this.screenData.data.buffer);
+        this.screenOffset = 0;
+        this.fetchBGArray = [];
+        this.fetchSpriteArray = [];
     }
 
     setEnabled(val) {
@@ -83,7 +89,9 @@ class PPU {
             this.setMode(2);    // Reading from OAM (80 cycles)
         } else if (80 <= lineClock && lineClock - deltaClock < 80) {
             this.setMode(3);    // Reading from OAM and VRAM (172 cycles)
-            this.drawLine(this.mmu.memory[0xff44]);    // draw line at beginning of mode 3
+            if (this.shouldDrawLines) {
+                this.drawLine(this.mmu.memory[0xff44]);    // draw line at beginning of mode 3
+            }
         } else if (252 <= lineClock && lineClock - deltaClock < 252) {
             this.setMode(0);    // H-Blank (204 cycles)
         }
@@ -275,6 +283,36 @@ class PPU {
             }
             bgContext.putImageData(bgData, 0, 0);
         }
+    }
+
+    searchOAM() {
+        this.objSize = this.mmu.memory[0xff40] & 0x04 ? 16 : 8;
+        this.lineObjects = [];
+        for (let offset = 0xfe00; offset < 0xfea0; offset += 4) {
+            const objY = this.mmu.memory[offset] - 16;
+            if (objY <= this.ly && this.ly < objY + this.objSize) {
+                let tileIndex = this.mmu.memory[offset + 2];
+                if (this.objSize === 16) tileIndex &= 0xfe;
+                this.lineObjects.push({
+                    y: objY,
+                    x: this.mmu.memory[offset + 1] - 8,
+                    tile: tileIndex,
+                    flags: this.mmu.memory[offset + 3],
+                });
+                if (this.lineObjects.length >= 10) break;
+            }
+        }
+    }
+
+    initMode3() {
+        this.winX = this.mmu.memory[0xff4b] - 7;  // FF4B - WX (Window X Position + 7) (R/W)
+        this.fetchBGArray = [];
+        this.fetchSpriteArray = [];
+        this.dots = 0;
+    }
+
+    drawDots() {
+
     }
 }
 
