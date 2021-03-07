@@ -12,14 +12,14 @@ const buttonMap = {
     "ArrowDown": "down",
     "ArrowLeft": "left",
     "ArrowRight": "right",
-}
+};
 
 window.gb = gb;     // make accessible in the console
 window.buttonMap = buttonMap;
 
 function runToBreak() {
     let breakCondition = document.getElementById("break-condition").value;
-    gb.ppu.enabled = false;
+    gb.ppu.shouldDrawLines = false;
     if (typeof eval(breakCondition) === "number") {
         const addr = eval(breakCondition);
         while (gb.cpu.pc !== addr) {
@@ -30,7 +30,7 @@ function runToBreak() {
             gb.cpuStep();
         }
     }
-    gb.ppu.enabled = true;
+    gb.ppu.shouldDrawLines = true;
     gb.updateInfo();
     console.log("Breakpoint reached");
 }
