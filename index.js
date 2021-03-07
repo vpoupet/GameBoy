@@ -56,8 +56,6 @@ function reset() {
 window.onload = function () {
     // Screen canvas
     const canvas = document.getElementById("screen");
-    canvas.width = SCREEN_WIDTH;
-    canvas.height = SCREEN_HEIGHT;
     const context = canvas.getContext('2d');
     gb.ppu.setContext(context);
 

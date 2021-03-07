@@ -21,17 +21,20 @@ class PPU {
         this.lcdcStatus = false;
         this.clock = 0;
         this.shouldDrawLines = true;
+        this.upscaleFactor = 2;
+    }
+
+    setUpscaleFactor(factor) {
+        this.upscaleFactor = factor;
+        this.screenContext.canvas.width = 160 * factor;
+        this.screenContext.canvas.height = 144 * factor;
+        this.screenData = this.screenContext.createImageData(160 * factor, 144 * factor);
+        this.clearScreen();
     }
 
     setContext(context) {
         this.screenContext = context;
-        this.lineData = this.screenContext.createImageData(160, 1);
-        this.lineArray = new Uint32Array(this.lineData.data.buffer);
-        this.screenData = this.screenContext.createImageData(160, 144);
-        this.screenArray = new Uint32Array(this.screenData.data.buffer);
-        this.screenOffset = 0;
-        this.fetchBGArray = [];
-        this.fetchSpriteArray = [];
+        this.setUpscaleFactor(this.upscaleFactor);
     }
 
     setEnabled(val) {
@@ -60,7 +63,8 @@ class PPU {
         }
     }
 
-    startFrame() {
+    endFrame() {
+        this.screenContext.putImageData(this.screenData, 0, 0);
         this.windowLine = 0;
         this.winY = this.mmu.memory[0xff4a];
         this.dmg.isNewFrame = true;
@@ -84,6 +88,7 @@ class PPU {
             if (frameClock - deltaClock < 65664) {
                 this.setMode(1);
                 this.mmu.memory[0xff0f] |= 0x01;    // request V-Blank interrupt
+                this.endFrame();
             }
         } else if (lineClock - deltaClock < 0) {
             this.setMode(2);    // Reading from OAM (80 cycles)
@@ -96,11 +101,6 @@ class PPU {
             this.setMode(0);    // H-Blank (204 cycles)
         }
 
-        // Set this.isNewFrame at beginning of frame
-        if (frameClock - deltaClock < 0) {
-            this.startFrame();
-        }
-
         // Update Interrupts
         const previousStatus = this.lcdcStatus;
         const _ff41 = this.mmu.memory[0xff41];
@@ -110,6 +110,33 @@ class PPU {
             || (_ff41 & 0x08) && this.mode === 0;
         if (!previousStatus && this.lcdcStatus) {
             this.mmu.memory[0xff0f] |= 0x02;    // request interrupt
+        }
+    }
+
+    fillUpscaledPixel(imageData, x, y, color, factor) {
+        if (0 <= x && x * factor < imageData.width) {
+            const arrayBuffer = new Uint32Array(imageData.data.buffer);
+            for (let i = 0; i < factor; i++) {
+                for (let j = 0; j < factor; j++) {
+                    arrayBuffer[(y * factor + i) * imageData.width + x * factor + j] = color;
+                }
+            }
+        }
+    }
+
+    drawTileLine(tileOffset, lineIndex, imageData, x, y, factor, palette = [0, 1, 2, 3], transparency = false, flip = false) {
+        const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
+        const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
+        for (let i = 0; i < 8; i++) {
+            const j = 7 - i;
+            const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
+            if (shade !== 0 || !transparency) {
+                if (flip) {
+                    this.fillUpscaledPixel(imageData, x + 7 - i, y, colors[palette[shade]], factor);
+                } else {
+                    this.fillUpscaledPixel(imageData, x + i, y, colors[palette[shade]], factor);
+                }
+            }
         }
     }
 
@@ -138,11 +165,10 @@ class PPU {
 
         if ((_ff40 & 0x80) === 0) {
             // display is not enabled: clear line and return
-            for (let i = 0; i < 160; i++) {
-                this.lineArray[i] = colors[0];
+            for (let x = 0; x < 160; x++) {
+                this.fillUpscaledPixel(this.screenData, x, ly, colors[0], this.upscaleFactor);
             }
-            this.screenContext.putImageData(this.lineData, 0, ly);
-            return
+            return;
         }
 
         if (_ff40 & 0x01) {
@@ -158,7 +184,7 @@ class PPU {
             while (lx < 160) {
                 const tileIndex = this.mmu.memory[bgTileMapOffset + tx];
                 const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.fetchTileLine(tileDataOffset, bgTileLine, this.lineArray, lx, bgPalette);
+                this.drawTileLine(tileDataOffset, bgTileLine, this.screenData, lx, ly, this.upscaleFactor, bgPalette);
                 tx += 1;
                 tx %= 32;
                 lx += 8;
@@ -175,7 +201,7 @@ class PPU {
                     while (lx < 160) {
                         const tileIndex = this.mmu.memory[winTileMapOffset + tx];
                         const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                        this.fetchTileLine(tileDataOffset, winTileLine, this.lineArray, lx, bgPalette);
+                        this.drawTileLine(tileDataOffset, winTileLine, this.screenData, lx, ly, this.upscaleFactor, bgPalette);
                         tx += 1;
                         tx %= 32;
                         lx += 8;
@@ -185,8 +211,8 @@ class PPU {
             }
         } else {
             // clear line
-            for (let i = 0; i < 160; i++) {
-                this.lineArray[i] = colors[0];
+            for (let x = 0; x < 160; x++) {
+                this.fillUpscaledPixel(this.screenData, x, ly, colors[0], this.upscaleFactor);
             }
         }
 
@@ -210,18 +236,19 @@ class PPU {
                     const tileDataOffset = 0x8000 + this.mmu.memory[spriteOffset + 2] * 16;
                     const flipX = (spriteAttributes & 0x20) !== 0;
                     const palette = spriteAttributes & 0x10 ? obp1 : obp0;
-                    this.fetchTileLine(
+                    this.drawTileLine(
                         tileDataOffset,
                         spriteLine,
-                        this.lineArray,
+                        this.screenData,
                         spriteX,
+                        ly,
+                        this.upscaleFactor,
                         palette,
                         true,
                         flipX);
                 }
             }
         }
-        this.screenContext.putImageData(this.lineData, 0, ly);
     }
 
     reset() {
@@ -230,21 +257,22 @@ class PPU {
 
     clearScreen() {
         this.screenContext.fillStyle = "#9BBC0F";
-        this.screenContext.fillRect(0, 0, 160, 144);
+        this.screenContext.fillRect(0, 0, 160 * this.upscaleFactor, 144 * this.upscaleFactor);
     }
 
     displayTiles() {
         const tilesCanvas = document.getElementById("tiles");
         const tilesContext = tilesCanvas.getContext('2d');
         const tilesData = tilesContext.createImageData(128, 192);
-        const tilesArray = new Uint32Array(tilesData.data.buffer);
         for (let tileIndex = 0; tileIndex < 384; tileIndex++) {
             for (let lineIndex = 0; lineIndex < 8; lineIndex++) {
-                this.fetchTileLine(
+                this.drawTileLine(
                     0x8000 + 16 * tileIndex,
                     lineIndex,
-                    tilesArray,
-                    (~~(tileIndex / 16) * 8 + lineIndex) * 128 + (tileIndex % 16) * 8
+                    tilesData,
+                    (tileIndex % 16) * 8,
+                    ~~(tileIndex / 16) * 8 + lineIndex,
+                    1
                 );
             }
         }
@@ -257,9 +285,7 @@ class PPU {
             const bgCanvas = document.getElementById("background" + mapIndex);
             const bgContext = bgCanvas.getContext('2d');
             const bgData = bgContext.createImageData(256, 256);
-            const bgArray = new Uint32Array(bgData.data.buffer);
             const tileMapOffset = mapIndex === 0 ? 0x9800 : 0x9c00;
-            let offset = 0;
             let tileOffset;
             for (let ty = 0; ty < 32; ty++) {
                 for (let lineIndex = 0; lineIndex < 8; lineIndex++) {
@@ -270,19 +296,29 @@ class PPU {
                         } else {
                             tileOffset = 0x9000 + 16 * (tileIndex << 24 >> 24);
                         }
-                        this.fetchTileLine(
+                        this.drawTileLine(
                             tileOffset,
                             lineIndex,
-                            bgArray,
-                            offset,
+                            bgData,
+                            8 * tx,
+                            8 * ty + lineIndex,
+                            1,
                             palette,
                         )
-                        offset += 8;
                     }
                 }
             }
             bgContext.putImageData(bgData, 0, 0);
         }
+    }
+
+    dumpTileData() {
+        const tiles = [];
+        for (let offset = 0x8000; offset < 0x9800; offset += 16) {
+            const array = Array.from(this.mmu.memory.slice(offset, offset + 16));
+            tiles.push(array.map(x => ("0" + x.toString(16)).slice(-2)).join(""));
+        }
+        return tiles;
     }
 
     searchOAM() {
