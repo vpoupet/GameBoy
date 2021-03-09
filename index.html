@@ -12,7 +12,10 @@
   <body>
     <div id="gameboy">
       <div id="screen-bg"></div>
-      <canvas id="screen"></canvas><img id="frame" src="img/gb_annotated.png">
+      <canvas class="screen-layer" id="screen-bg-back"></canvas>
+      <canvas class="screen-layer" id="screen-obj-back"></canvas>
+      <canvas class="screen-layer" id="screen-bg-font"></canvas>
+      <canvas class="screen-layer" id="screen-obj-front"></canvas><img id="frame" src="img/gb_annotated.png">
       <div class="button" id="button-a"></div>
       <div class="button" id="button-b"></div>
       <div class="button" id="button-start"></div>
@@ -26,9 +29,9 @@
       <div id="rom">
         <select id="rom-select" name="rom">
           <optgroup label="Games">
-            <option value="Tetris">Tetris</option>
+            <option value="Tetris" selected>Tetris</option>
             <option value="Dr. Mario">Dr. Mario</option>
-            <option value="Kirby's Dream Land" selected>Kirby's Dream Land</option>
+            <option value="Kirby's Dream Land">Kirby's Dream Land</option>
             <option value="Super Mario Land">Super Mario Land</option>
             <!--option(value="Super Mario Land 2") Super Mario Land 2-->
             <option value="The Legend of Zelda - Link's Awakening">The Legend of Zelda - Link's Awakening</option>
@@ -58,7 +61,7 @@
             <option value="misc/dmg-acid2">Acid2 PPU Test</option>
           </optgroup>
         </select>
-        <input id="skip-boot" type="checkbox" name="skip-boot">
+        <input id="skip-boot" type="checkbox" name="skip-boot" checked>
         <label for="skip-boot">Skip boot</label>
       </div>
       <div id="buttons">

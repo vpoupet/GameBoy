@@ -11,7 +11,10 @@ html
   body
     div#gameboy
       div#screen-bg
-      canvas#screen
+      canvas.screen-layer#screen-bg-back
+      canvas.screen-layer#screen-obj-back
+      canvas.screen-layer#screen-bg-font
+      canvas.screen-layer#screen-obj-front
       img#frame(src="img/gb_annotated.png")
       div.button#button-a
       div.button#button-b
@@ -25,9 +28,9 @@ html
       div#rom
         select#rom-select(name="rom")
           optgroup(label="Games")
-            option(value="Tetris") Tetris
+            option(value="Tetris" selected) Tetris
             option(value="Dr. Mario") Dr. Mario
-            option(value="Kirby's Dream Land" selected) Kirby's Dream Land
+            option(value="Kirby's Dream Land") Kirby's Dream Land
             option(value="Super Mario Land") Super Mario Land
             //option(value="Super Mario Land 2") Super Mario Land 2
             option(value="The Legend of Zelda - Link's Awakening") The Legend of Zelda - Link's Awakening
@@ -54,7 +57,7 @@ html
             option(value="blargg/mem_timing_test2") Blargg Memory Timing Test 2
             option(value="misc/merken") Merken Demo
             option(value="misc/dmg-acid2") Acid2 PPU Test
-        input#skip-boot(type="checkbox" name="skip-boot")
+        input#skip-boot(type="checkbox" name="skip-boot" checked=true)
         label(for="skip-boot") Skip boot
       div#buttons
         button#start-button Start

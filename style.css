@@ -24,7 +24,7 @@ html {
   top: 124px;
   left: 138px;
 }
-#gameboy #screen {
+#gameboy .screen-layer {
   position: absolute;
   background: none;
   width: 320px;

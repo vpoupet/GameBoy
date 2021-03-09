@@ -16,24 +16,52 @@ class PPU {
         this.mmu = dmg.mmu;
         this.enabled = true;
         this.windowLine = 0;
-        this.mode = 0;
         this.winY = 0;
         this.lcdcStatus = false;
         this.clock = 0;
         this.shouldDrawLines = true;
         this.upscaleFactor = 2;
+        this.upscaleMap = undefined;
+        this.upscaleImageData = undefined;
+        this.upscaleEnabled = false;
     }
 
     setUpscaleFactor(factor) {
         this.upscaleFactor = factor;
-        this.screenContext.canvas.width = 160 * factor;
-        this.screenContext.canvas.height = 144 * factor;
-        this.screenData = this.screenContext.createImageData(160 * factor, 144 * factor);
+        for (const canvas of this.canvasList) {
+            canvas.width = 160 * factor;
+            canvas.height = 144 * factor;
+        }
+        this.imageDataList = this.contextList.map(context => context.createImageData(160 * factor, 144 * factor));
         this.clearScreen();
     }
 
-    setContext(context) {
-        this.screenContext = context;
+    loadUpscaleData(name) {
+        const tilesImage = new Image();
+        tilesImage.onload = function () {
+            const canvas = document.createElement("canvas");
+            canvas.width = tilesImage.width;
+            canvas.height = tilesImage.height;
+            const context = canvas.getContext('2d');
+            context.drawImage(tilesImage, 0, 0, canvas.width, canvas.height);
+            this.upscaleImageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        }.bind(this);
+        tilesImage.src = `upscale/${name}.png`;
+        this.canvasList[0].style.backgroundImage = `url("upscale/${name}_bg.png")`;
+        fetch(`upscale/${name}.json`)
+            .then(response => response.json())
+            .then(data => {
+                this.upscaleMap = {};
+                for (let i = 0; i < data.map.length; i++) {
+                    this.upscaleMap[data.map[i]] = {x: i % 16, y: ~~(i / 16)};
+                }
+                this.upscaleEnabled = true;
+            });
+    }
+
+    setScreenCanvas(canvasList) {
+        this.canvasList = canvasList;
+        this.contextList = canvasList.map(c => c.getContext('2d'));
         this.setUpscaleFactor(this.upscaleFactor);
     }
 
@@ -41,7 +69,7 @@ class PPU {
         // TODO: check what happens when display disabled
         if (val && !this.enabled) {
             // disable
-            this.mmu.memory[0xff44] = 0;
+            this.mmu.memory[0xff44] = 0;    // reset LY
             this.updateCoincidenceFlag();
             this.clock = 0;
             this.setMode(0);
@@ -51,7 +79,6 @@ class PPU {
     }
 
     setMode(val) {
-        this.mode = val;
         this.mmu.memory[0xff41] = this.mmu.memory[0xff41] & 0xfc | val;
     }
 
@@ -64,10 +91,15 @@ class PPU {
     }
 
     endFrame() {
-        this.screenContext.putImageData(this.screenData, 0, 0);
+        for (let i = 0; i < this.contextList.length; i++) {
+            this.contextList[i].putImageData(this.imageDataList[i], 0, 0);
+        }
         this.windowLine = 0;
         this.winY = this.mmu.memory[0xff4a];
         this.dmg.isNewFrame = true;
+        const bgY = -this.mmu.memory[0xff42] * this.upscaleFactor;
+        const bgX = -this.mmu.memory[0xff43] * this.upscaleFactor;
+        this.canvasList[0].style.backgroundPosition = `${bgX}px ${bgY}px`;
     }
 
     update(deltaClock) {
@@ -105,9 +137,9 @@ class PPU {
         const previousStatus = this.lcdcStatus;
         const _ff41 = this.mmu.memory[0xff41];
         this.lcdcStatus = (_ff41 & 0x40) && this.mmu.memory[0xff44] === this.mmu.memory[0xff45]
-            || (_ff41 & 0x20) && this.mode === 2
-            || (_ff41 & 0x10) && this.mode === 1
-            || (_ff41 & 0x08) && this.mode === 0;
+            || (_ff41 & 0x20) && (_ff41 & 0x03) === 2
+            || (_ff41 & 0x10) && (_ff41 & 0x03) === 1
+            || (_ff41 & 0x08) && (_ff41 & 0x03) === 0;
         if (!previousStatus && this.lcdcStatus) {
             this.mmu.memory[0xff0f] |= 0x02;    // request interrupt
         }
@@ -124,17 +156,35 @@ class PPU {
         }
     }
 
-    drawTileLine(tileOffset, lineIndex, imageData, x, y, factor, palette = [0, 1, 2, 3], transparency = false, flip = false) {
-        const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
-        const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
-        for (let i = 0; i < 8; i++) {
-            const j = 7 - i;
-            const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
-            if (shade !== 0 || !transparency) {
-                if (flip) {
-                    this.fillUpscaledPixel(imageData, x + 7 - i, y, colors[palette[shade]], factor);
-                } else {
-                    this.fillUpscaledPixel(imageData, x + i, y, colors[palette[shade]], factor);
+    drawTileLine(tileOffset, lineIndex, imageData, x, y, upscaleFactor, palette = [0, 1, 2, 3], transparency = false, flip = false) {
+        const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
+        if (this.upscaleEnabled && tileString in this.upscaleMap) {
+            const tilePosition = this.upscaleMap[tileString];
+            const imageBuffer = new Uint32Array(imageData.data.buffer);
+            const upscaleBuffer = new Uint32Array(this.upscaleImageData.data.buffer);
+            for (let i = 0; i < upscaleFactor; i++) {
+                for (let j = 0; j < 8 * upscaleFactor; j++) {
+                    const dj = flip ? 8 * upscaleFactor - j - 1 : j;
+                    if (0 <= x * upscaleFactor + dj && x * upscaleFactor + dj < imageData.width) {
+                        const color = upscaleBuffer[((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleImageData.width + tilePosition.x * 8 * upscaleFactor + j];
+                        if (color !== 0) {
+                            imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + dj] = color;
+                        }
+                    }
+                }
+            }
+        } else {
+            const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
+            const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
+            for (let i = 0; i < 8; i++) {
+                const j = 7 - i;
+                const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
+                if (shade !== 0 || !transparency) {
+                    if (flip) {
+                        this.fillUpscaledPixel(imageData, x + 7 - i, y, colors[palette[shade]], upscaleFactor);
+                    } else {
+                        this.fillUpscaledPixel(imageData, x + i, y, colors[palette[shade]], upscaleFactor);
+                    }
                 }
             }
         }
@@ -162,12 +212,14 @@ class PPU {
 
     drawLine(ly) {
         const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
+        for (const imageData of this.imageDataList) {
+            for (let x = 0; x < 160; x++) {
+                this.fillUpscaledPixel(imageData, x, ly, 0, this.upscaleFactor);
+            }
+        }
 
         if ((_ff40 & 0x80) === 0) {
-            // display is not enabled: clear line and return
-            for (let x = 0; x < 160; x++) {
-                this.fillUpscaledPixel(this.screenData, x, ly, colors[0], this.upscaleFactor);
-            }
+            // display is not enabled
             return;
         }
 
@@ -184,7 +236,7 @@ class PPU {
             while (lx < 160) {
                 const tileIndex = this.mmu.memory[bgTileMapOffset + tx];
                 const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTileLine(tileDataOffset, bgTileLine, this.screenData, lx, ly, this.upscaleFactor, bgPalette);
+                this.drawTileLine(tileDataOffset, bgTileLine, this.imageDataList[2], lx, ly, this.upscaleFactor, bgPalette, true);
                 tx += 1;
                 tx %= 32;
                 lx += 8;
@@ -201,18 +253,13 @@ class PPU {
                     while (lx < 160) {
                         const tileIndex = this.mmu.memory[winTileMapOffset + tx];
                         const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                        this.drawTileLine(tileDataOffset, winTileLine, this.screenData, lx, ly, this.upscaleFactor, bgPalette);
+                        this.drawTileLine(tileDataOffset, winTileLine, this.imageDataList[2], lx, ly, this.upscaleFactor, bgPalette, true);
                         tx += 1;
                         tx %= 32;
                         lx += 8;
                     }
                     this.windowLine += 1;
                 }
-            }
-        } else {
-            // clear line
-            for (let x = 0; x < 160; x++) {
-                this.fillUpscaledPixel(this.screenData, x, ly, colors[0], this.upscaleFactor);
             }
         }
 
@@ -236,10 +283,11 @@ class PPU {
                     const tileDataOffset = 0x8000 + this.mmu.memory[spriteOffset + 2] * 16;
                     const flipX = (spriteAttributes & 0x20) !== 0;
                     const palette = spriteAttributes & 0x10 ? obp1 : obp0;
+                    const objData = spriteAttributes & 0x80 ? this.imageDataList[1] : this.imageDataList[3];
                     this.drawTileLine(
                         tileDataOffset,
                         spriteLine,
-                        this.screenData,
+                        objData,
                         spriteX,
                         ly,
                         this.upscaleFactor,
@@ -256,8 +304,10 @@ class PPU {
     }
 
     clearScreen() {
-        this.screenContext.fillStyle = "#9BBC0F";
-        this.screenContext.fillRect(0, 0, 160 * this.upscaleFactor, 144 * this.upscaleFactor);
+        for (const context of this.contextList) {
+            context.fillStyle = "#00000000";
+            context.fillRect(0, 0, 160 * this.upscaleFactor, 144 * this.upscaleFactor);
+        }
     }
 
     displayTiles() {

@@ -1,8 +1,6 @@
 import {DMG, pressedButtons} from "./src/dmg.js";
 
 const gb = new DMG();
-const SCREEN_WIDTH = 160;
-const SCREEN_HEIGHT = 144;
 const buttonMap = {
     "q": "start",
     "w": "select",
@@ -55,9 +53,7 @@ function reset() {
 
 window.onload = function () {
     // Screen canvas
-    const canvas = document.getElementById("screen");
-    const context = canvas.getContext('2d');
-    gb.ppu.setContext(context);
+    gb.ppu.setScreenCanvas([...document.getElementsByClassName("screen-layer")]);
 
     // Keyboard events
     window.addEventListener("keydown", e => {
