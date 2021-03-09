@@ -93,7 +93,9 @@ class PPU {
     endFrame() {
         for (let i = 0; i < this.contextList.length; i++) {
             this.contextList[i].putImageData(this.imageDataList[i], 0, 0);
+            this.imageDataList[i].data.fill(0); // clear ImageData
         }
+
         this.windowLine = 0;
         this.winY = this.mmu.memory[0xff4a];
         this.dmg.isNewFrame = true;
@@ -156,51 +158,86 @@ class PPU {
         }
     }
 
-    drawTileLine(tileOffset, lineIndex, imageData, x, y, upscaleFactor, palette = [0, 1, 2, 3], transparency = false, flip = false) {
-        const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
-        if (this.upscaleEnabled && tileString in this.upscaleMap) {
-            const tilePosition = this.upscaleMap[tileString];
-            const imageBuffer = new Uint32Array(imageData.data.buffer);
-            const upscaleBuffer = new Uint32Array(this.upscaleImageData.data.buffer);
-            for (let i = 0; i < upscaleFactor; i++) {
-                for (let j = 0; j < 8 * upscaleFactor; j++) {
-                    const dj = flip ? 8 * upscaleFactor - j - 1 : j;
-                    if (0 <= x * upscaleFactor + dj && x * upscaleFactor + dj < imageData.width) {
-                        const color = upscaleBuffer[((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleImageData.width + tilePosition.x * 8 * upscaleFactor + j];
-                        if (color !== 0) {
-                            imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + dj] = color;
-                        }
-                    }
-                }
-            }
-        } else {
-            const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
-            const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
-            for (let i = 0; i < 8; i++) {
-                const j = 7 - i;
-                const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
-                if (shade !== 0 || !transparency) {
-                    if (flip) {
-                        this.fillUpscaledPixel(imageData, x + 7 - i, y, colors[palette[shade]], upscaleFactor);
-                    } else {
-                        this.fillUpscaledPixel(imageData, x + i, y, colors[palette[shade]], upscaleFactor);
-                    }
-                }
-            }
-        }
-    }
-
-    fetchTileLine(tileOffset, lineIndex, buffer, bufferOffset, palette = [0, 1, 2, 3], transparency = false, flip = false) {
+    drawTileLine(tileOffset, lineIndex, imageData, x, y, upscaleFactor, palette = [0, 1, 2, 3]) {
         const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
         const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
         for (let i = 0; i < 8; i++) {
             const j = 7 - i;
             const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
-            if (shade !== 0 || !transparency) {
-                if (flip) {
-                    buffer[bufferOffset + 7 - i] = colors[palette[shade]];
+            this.fillUpscaledPixel(imageData, x + i, y, colors[palette[shade]], upscaleFactor);
+        }
+    }
+
+    drawBGTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette) {
+        if (this.upscaleEnabled) {
+            const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
+            if (tileString in this.upscaleMap) {
+                const imageData = this.imageDataList[2];
+                const tilePosition = this.upscaleMap[tileString];
+                const imageBuffer = new Uint32Array(imageData.data.buffer);
+                const upscaleBuffer = new Uint32Array(this.upscaleImageData.data.buffer);
+                for (let i = 0; i < upscaleFactor; i++) {
+                    for (let j = 0; j < 8 * upscaleFactor; j++) {
+                        if (0 <= x * upscaleFactor + j && x * upscaleFactor + j < imageData.width) {
+                            imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + j] =
+                                upscaleBuffer[
+                                ((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleImageData.width
+                                + tilePosition.x * 8 * upscaleFactor + j];
+                        }
+                    }
+                }
+                return;
+            }
+        }
+
+        const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
+        const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
+        for (let i = 0; i < 8; i++) {
+            const j = 7 - i;
+            const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
+            if (shade === 0) {
+                this.fillUpscaledPixel(this.imageDataList[0], x + i, y, colors[palette[shade]], upscaleFactor);
+                this.fillUpscaledPixel(this.imageDataList[2], x + i, y, 0, upscaleFactor);
+            } else {
+                this.fillUpscaledPixel(this.imageDataList[2], x + i, y, colors[palette[shade]], upscaleFactor);
+            }
+        }
+    }
+
+    drawObjectTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette, attributes) {
+        const imageData = (attributes & 0x80) ? this.imageDataList[1] : this.imageDataList[3];
+
+        if (this.upscaleEnabled) {
+            const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
+            if (tileString in this.upscaleMap) {
+                const tilePosition = this.upscaleMap[tileString];
+                const imageBuffer = new Uint32Array(imageData.data.buffer);
+                const upscaleBuffer = new Uint32Array(this.upscaleImageData.data.buffer);
+                for (let i = 0; i < upscaleFactor; i++) {
+                    for (let j = 0; j < 8 * upscaleFactor; j++) {
+                        const dj = (attributes & 0x20) ? 8 * upscaleFactor - j - 1 : j;
+                        if (0 <= x * upscaleFactor + dj && x * upscaleFactor + dj < imageData.width) {
+                            const color = upscaleBuffer[((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleImageData.width + tilePosition.x * 8 * upscaleFactor + j];
+                            if (color !== 0) {
+                                imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + dj] = color;
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+        }
+
+        const byte0 = this.mmu.memory[tileOffset + 2 * lineIndex];
+        const byte1 = this.mmu.memory[tileOffset + 2 * lineIndex + 1];
+        for (let i = 0; i < 8; i++) {
+            const j = 7 - i;
+            const shade = (byte0 & 1 << j | (byte1 & 1 << j) << 1) >> j;
+            if (shade !== 0) {
+                if (attributes & 0x20) {
+                    this.fillUpscaledPixel(imageData, x + 7 - i, y, colors[palette[shade]], upscaleFactor);
                 } else {
-                    buffer[bufferOffset + i] = colors[palette[shade]];
+                    this.fillUpscaledPixel(imageData, x + i, y, colors[palette[shade]], upscaleFactor);
                 }
             }
         }
@@ -212,11 +249,6 @@ class PPU {
 
     drawLine(ly) {
         const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
-        for (const imageData of this.imageDataList) {
-            for (let x = 0; x < 160; x++) {
-                this.fillUpscaledPixel(imageData, x, ly, 0, this.upscaleFactor);
-            }
-        }
 
         if ((_ff40 & 0x80) === 0) {
             // display is not enabled
@@ -236,7 +268,7 @@ class PPU {
             while (lx < 160) {
                 const tileIndex = this.mmu.memory[bgTileMapOffset + tx];
                 const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTileLine(tileDataOffset, bgTileLine, this.imageDataList[2], lx, ly, this.upscaleFactor, bgPalette, true);
+                this.drawBGTileLine(tileDataOffset, bgTileLine, lx, ly, this.upscaleFactor, bgPalette);
                 tx += 1;
                 tx %= 32;
                 lx += 8;
@@ -253,7 +285,7 @@ class PPU {
                     while (lx < 160) {
                         const tileIndex = this.mmu.memory[winTileMapOffset + tx];
                         const tileDataOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                        this.drawTileLine(tileDataOffset, winTileLine, this.imageDataList[2], lx, ly, this.upscaleFactor, bgPalette, true);
+                        this.drawBGTileLine(tileDataOffset, winTileLine, lx, ly, this.upscaleFactor, bgPalette);
                         tx += 1;
                         tx %= 32;
                         lx += 8;
@@ -264,37 +296,24 @@ class PPU {
         }
 
         // Sprites
-        // TODO: Redo sprite drawing to handle
-        // - 10 sprites per line limitation
-        // - sprite priority
-        // - sprite transparency (over or under BG and Window)
         if (_ff40 & 0x02) { // Sprites enabled
             const obp0 = this.makePalette(this.mmu.memory[0xff48]); // OBP0 - Object Palette 0 Data
             const obp1 = this.makePalette(this.mmu.memory[0xff49]); // OBP1 - Object Palette 1 Data
             const spriteSize = _ff40 & 0x04 ? 16 : 8;
-            for (let spriteOffset = 0xfe00; spriteOffset < 0xfea0; spriteOffset += 4) {
-                const spriteAttributes = this.mmu.memory[spriteOffset + 3];
-                let spriteLine = ly - (this.mmu.memory[spriteOffset] - 16);
-                if (spriteAttributes & 0x40) {  // Y-flip
+            const lineObjects = this.searchOAM();
+            for (const lineObject of lineObjects) {
+                let spriteLine = ly - lineObject.y;
+                if (lineObject.attributes & 0x40) {    // Y-flip
                     spriteLine = spriteSize - 1 - spriteLine;
                 }
-                if (0 <= spriteLine && spriteLine < spriteSize) {
-                    const spriteX = this.mmu.memory[spriteOffset + 1] - 8;
-                    const tileDataOffset = 0x8000 + this.mmu.memory[spriteOffset + 2] * 16;
-                    const flipX = (spriteAttributes & 0x20) !== 0;
-                    const palette = spriteAttributes & 0x10 ? obp1 : obp0;
-                    const objData = spriteAttributes & 0x80 ? this.imageDataList[1] : this.imageDataList[3];
-                    this.drawTileLine(
-                        tileDataOffset,
-                        spriteLine,
-                        objData,
-                        spriteX,
-                        ly,
-                        this.upscaleFactor,
-                        palette,
-                        true,
-                        flipX);
-                }
+                this.drawObjectTileLine(
+                    0x8000 + lineObject.tileIndex * 16,
+                    spriteLine,
+                    lineObject.x,
+                    ly,
+                    this.upscaleFactor,
+                    (lineObject.attributes & 0x10) ? obp1 : obp0,
+                    lineObject.attributes);
             }
         }
     }
@@ -304,9 +323,10 @@ class PPU {
     }
 
     clearScreen() {
+        const width = this.canvasList[0].width;
+        const height = this.canvasList[0].height;
         for (const context of this.contextList) {
-            context.fillStyle = "#00000000";
-            context.fillRect(0, 0, 160 * this.upscaleFactor, 144 * this.upscaleFactor);
+            context.clearRect(0, 0, width, height);
         }
     }
 
@@ -373,22 +393,24 @@ class PPU {
 
     searchOAM() {
         this.objSize = this.mmu.memory[0xff40] & 0x04 ? 16 : 8;
-        this.lineObjects = [];
+        let lineObjects = [];
         const ly = this.mmu.memory[0xff44];
         for (let offset = 0xfe00; offset < 0xfea0; offset += 4) {
             const objY = this.mmu.memory[offset] - 16;
             if (objY <= ly && ly < objY + this.objSize) {
                 let tileIndex = this.mmu.memory[offset + 2];
                 if (this.objSize === 16) tileIndex &= 0xfe;
-                this.lineObjects.push({
+                lineObjects.unshift({
                     y: objY,
                     x: this.mmu.memory[offset + 1] - 8,
-                    tile: tileIndex,
-                    flags: this.mmu.memory[offset + 3],
+                    tileIndex: tileIndex,
+                    attributes: this.mmu.memory[offset + 3],
                 });
-                if (this.lineObjects.length >= 10) break;
+                if (lineObjects.length >= 10) break;
             }
         }
+        lineObjects.sort((a, b) => b.x - a.x);
+        return lineObjects;
     }
 }
 
