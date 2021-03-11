@@ -30,14 +30,23 @@ class DMG {
         this.isNewFrame = false;
         this.shouldUpdateEachFrame = false;
         this.requestID = undefined;
-        this.lcdcStatus = false;
         this.viewAddress = 0;
+        this.gameTitle = undefined;
     }
 
     loadRom(romFile, execBios=true) {
         fetch(romFile)
             .then(response => response.arrayBuffer())
-            .then(data => this.reset(new Uint8Array(data), execBios));
+            .then(data => {
+                const bytes = new Uint8Array(data);
+                // get game title from cartridge header
+                this.gameTitle = "";
+                for (let offset = 0x0134; offset < 0x0144; offset++) {
+                    if (bytes[offset] === 0) break;
+                    this.gameTitle += String.fromCharCode(bytes[offset]);
+                }
+                this.reset(bytes, execBios)
+            });
     }
 
     reset(cartridge, execBios=true) {
