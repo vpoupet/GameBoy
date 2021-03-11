@@ -65,6 +65,7 @@ html
         button#step-button Step
         button#reset-button Reset
         button#refresh-button Refresh
+        button#upscale-button EXPERIMENTAL
       div#debug
         div#break
           input#break-condition(type="text" value="0x100")
@@ -129,4 +130,5 @@ html
                 td F
             tbody#memory-tbody
         div#serial-output
+    script(src="localforage.min.js")
     script(src="index.js" type="module")

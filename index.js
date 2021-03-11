@@ -67,12 +67,8 @@ window.onload = function () {
                 gb.updateInfo();
             });
     document.getElementById("reset-button").addEventListener("click", reset);
-    document.getElementById("refresh-button")
-        .addEventListener(
-            "click",
-            e => {
-                gb.updateInfo();
-            });
+    document.getElementById("refresh-button").addEventListener("click",e => gb.updateInfo());
+    document.getElementById("upscale-button").addEventListener("click", e => gb.ppu.toggleUpscaleData());
 
     // ROM select
     const romSelect = document.getElementById("rom-select");

@@ -21,9 +21,7 @@ class PPU {
         this.clock = 0;
         this.shouldDrawLines = true;
         this.upscaleFactor = 2;
-        this.upscaleMap = undefined;
-        this.upscaleImageData = undefined;
-        this.upscaleEnabled = false;
+        this.upscaleData = undefined;
     }
 
     setUpscaleFactor(factor) {
@@ -36,7 +34,8 @@ class PPU {
         this.clearScreen();
     }
 
-    loadUpscaleData(name) {
+    loadUpscaleData() {
+        this.upscaleData = {};
         const tilesImage = new Image();
         tilesImage.onload = function () {
             const canvas = document.createElement("canvas");
@@ -44,19 +43,43 @@ class PPU {
             canvas.height = tilesImage.height;
             const context = canvas.getContext('2d');
             context.drawImage(tilesImage, 0, 0, canvas.width, canvas.height);
-            this.upscaleImageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            this.upscaleData.imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         }.bind(this);
-        tilesImage.src = `upscale/${name}.png`;
-        this.canvasList[0].style.backgroundImage = `url("upscale/${name}_bg.png")`;
-        fetch(`upscale/${name}.json`)
+        tilesImage.src = `upscale/${this.dmg.gameTitle}/tiles.png`;
+        fetch(`upscale/${this.dmg.gameTitle}/tilemap.json`)
             .then(response => response.json())
             .then(data => {
-                this.upscaleMap = {};
+                this.upscaleData.map = {};
                 for (let i = 0; i < data.map.length; i++) {
-                    this.upscaleMap[data.map[i]] = {x: i % 16, y: ~~(i / 16)};
+                    this.upscaleData.map[data.map[i]] = {x: i % 16, y: ~~(i / 16)};
                 }
-                this.upscaleEnabled = true;
+                this.upscaleData.enabled = true;
             });
+        this.enableUpscaleData();
+    }
+
+    enableUpscaleData() {
+        if (this.upscaleData) {
+            this.upscaleData.enabled = true;
+            this.canvasList[0].style.backgroundImage = `url("upscale/${this.dmg.gameTitle}/bg.png")`;
+        } else {
+            this.loadUpscaleData();
+        }
+    }
+
+    disableUpscaleData() {
+        this.upscaleData.enabled = false;
+        this.canvasList[0].style.backgroundImage = "none";
+    }
+
+    toggleUpscaleData() {
+        if (this.upscaleData === undefined) {
+            this.loadUpscaleData();
+        } else if (this.upscaleData.enabled) {
+            this.disableUpscaleData();
+        } else {
+            this.enableUpscaleData();
+        }
     }
 
     setScreenCanvas(canvasList) {
@@ -169,19 +192,19 @@ class PPU {
     }
 
     drawBGTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette) {
-        if (this.upscaleEnabled) {
+        if (this.upscaleData && this.upscaleData.enabled) {
             const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
-            if (tileString in this.upscaleMap) {
+            if (tileString in this.upscaleData.map) {
                 const imageData = this.imageDataList[2];
-                const tilePosition = this.upscaleMap[tileString];
+                const tilePosition = this.upscaleData.map[tileString];
                 const imageBuffer = new Uint32Array(imageData.data.buffer);
-                const upscaleBuffer = new Uint32Array(this.upscaleImageData.data.buffer);
+                const upscaleBuffer = new Uint32Array(this.upscaleData.imageData.data.buffer);
                 for (let i = 0; i < upscaleFactor; i++) {
                     for (let j = 0; j < 8 * upscaleFactor; j++) {
                         if (0 <= x * upscaleFactor + j && x * upscaleFactor + j < imageData.width) {
                             imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + j] =
                                 upscaleBuffer[
-                                ((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleImageData.width
+                                ((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleData.imageData.width
                                 + tilePosition.x * 8 * upscaleFactor + j];
                         }
                     }
@@ -207,17 +230,17 @@ class PPU {
     drawObjectTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette, attributes) {
         const imageData = (attributes & 0x80) ? this.imageDataList[1] : this.imageDataList[3];
 
-        if (this.upscaleEnabled) {
+        if (this.upscaleData && this.upscaleData.enabled) {
             const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
-            if (tileString in this.upscaleMap) {
-                const tilePosition = this.upscaleMap[tileString];
+            if (tileString in this.upscaleData.map) {
+                const tilePosition = this.upscaleData.map[tileString];
                 const imageBuffer = new Uint32Array(imageData.data.buffer);
-                const upscaleBuffer = new Uint32Array(this.upscaleImageData.data.buffer);
+                const upscaleBuffer = new Uint32Array(this.upscaleData.imageData.data.buffer);
                 for (let i = 0; i < upscaleFactor; i++) {
                     for (let j = 0; j < 8 * upscaleFactor; j++) {
                         const dj = (attributes & 0x20) ? 8 * upscaleFactor - j - 1 : j;
                         if (0 <= x * upscaleFactor + dj && x * upscaleFactor + dj < imageData.width) {
-                            const color = upscaleBuffer[((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleImageData.width + tilePosition.x * 8 * upscaleFactor + j];
+                            const color = upscaleBuffer[((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleData.imageData.width + tilePosition.x * 8 * upscaleFactor + j];
                             if (color !== 0) {
                                 imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + dj] = color;
                             }
@@ -320,6 +343,7 @@ class PPU {
 
     reset() {
         this.clearScreen();
+        this.upscaleData = undefined;
     }
 
     clearScreen() {
