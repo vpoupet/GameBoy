@@ -1,19 +1,7 @@
-import {DMG, pressedButtons} from "./src/dmg.js";
-
+import { DMG } from "./src/dmg.js";
 const gb = new DMG();
-const buttonMap = {
-    "q": "start",
-    "w": "select",
-    "f": "b",
-    "g": "a",
-    "ArrowUp": "up",
-    "ArrowDown": "down",
-    "ArrowLeft": "left",
-    "ArrowRight": "right",
-};
 
 window.gb = gb;     // make accessible in the console
-window.buttonMap = buttonMap;
 
 function runToBreak() {
     let breakCondition = document.getElementById("break-condition").value;
@@ -54,21 +42,6 @@ function reset() {
 window.onload = function () {
     // Screen canvas
     gb.ppu.setScreenCanvas([...document.getElementsByClassName("screen-layer")]);
-
-    // Keyboard events
-    window.addEventListener("keydown", e => {
-        pressedButtons.add(buttonMap[e.key]);
-        if (document.activeElement === document.body &&
-            ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-            e.preventDefault();
-        }
-    });
-    window.addEventListener("keyup", e => {
-        pressedButtons.delete(buttonMap[e.key]);
-        if (document.activeElement === document.body) {
-            e.preventDefault();
-        }
-    });
 
     // Execution buttons
     document.getElementById("start-button")

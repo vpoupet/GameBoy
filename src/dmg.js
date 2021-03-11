@@ -1,10 +1,8 @@
+import {isButtonPressed} from './input.js';
 import {CPU} from './cpu.js';
 import {MMU, hex} from './mmu.js';
 import {PPU} from './ppu.js';
 import {asmCodes, asmCodesCB} from "./opcodes.js";
-
-
-const pressedButtons = new Set();
 
 
 class DMG {
@@ -62,17 +60,17 @@ class DMG {
         let newInputs = 0x0f;
         if ((this.mmu.memory[0xff00] & 0x20) === 0) {
             // buttons selected
-            if (pressedButtons.has("start")) newInputs &= ~0x08;  // Start
-            if (pressedButtons.has("select")) newInputs &= ~0x04;  // Select
-            if (pressedButtons.has("b")) newInputs &= ~0x02;  // B
-            if (pressedButtons.has("a")) newInputs &= ~0x01;  // A
+            if (isButtonPressed("start")) newInputs &= ~0x08;  // Start
+            if (isButtonPressed("select")) newInputs &= ~0x04;  // Select
+            if (isButtonPressed("b")) newInputs &= ~0x02;  // B
+            if (isButtonPressed("a")) newInputs &= ~0x01;  // A
         }
         if ((this.mmu.memory[0xff00] & 0x10) === 0) {
             // directions selected
-            if (pressedButtons.has("down")) newInputs &= ~0x08;  // Down
-            if (pressedButtons.has("up")) newInputs &= ~0x04;    // Up
-            if (pressedButtons.has("left")) newInputs &= ~0x02;  // Left
-            if (pressedButtons.has("right")) newInputs &= ~0x01; // Right
+            if (isButtonPressed("down")) newInputs &= ~0x08;  // Down
+            if (isButtonPressed("up")) newInputs &= ~0x04;    // Up
+            if (isButtonPressed("left")) newInputs &= ~0x02;  // Left
+            if (isButtonPressed("right")) newInputs &= ~0x01; // Right
         }
         this.mmu.memory[0xff00] = this.mmu.memory[0xff00] & 0xf0 | newInputs;
         // TODO implement joypad interrupt correctly
@@ -219,5 +217,5 @@ class DMG {
 }
 
 export {
-    DMG, hex, pressedButtons,
+    DMG, hex,
 };
