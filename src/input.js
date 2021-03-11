@@ -1,9 +1,8 @@
-"use strict";
-
-const AXES_THRESHOLD = .4;
-let pressedButtons = [];
 let pressedKeys = new Set();
-let buttonMap = {
+let pressedButtons = new Set();
+let pressedGamepadButtons = new Set();
+let gamepadIndex = undefined;
+let keyboardMap = {
     start: "q",
     select: "w",
     a: "g",
@@ -13,41 +12,92 @@ let buttonMap = {
     left: "ArrowLeft",
     right: "ArrowRight",
 };
-window.buttonMap = buttonMap;   // make accessible in the console
+window.keyboardMap = keyboardMap;   // make accessible in the console
+let gamepadMap = {
+    start: 9,
+    select: 8,
+    a: 1,
+    b: 0,
+    up: 12,
+    down: 13,
+    left: 14,
+    right: 15,
+}
 
 
-    // Gamepad events
-    window.addEventListener("gamepadconnected", (event) => {
-        console.log("A gamepad connected:");
-        console.log(event.gamepad);
-        pressedButtons[event.gamepad.index] = new Set();
-    });
+// Gamepad events
+window.addEventListener("gamepadconnected", (event) => {
+    console.log("A gamepad connected:");
+    console.log(event.gamepad);
+    gamepadIndex = event.gamepad.index;
+});
 
-    window.addEventListener("gamepaddisconnected", (event) => {
-        console.log("A gamepad disconnected:");
-        console.log(event.gamepad);
-        pressedButtons[event.gamepad.index] = undefined;
-    });
+window.addEventListener("gamepaddisconnected", (event) => {
+    console.log("A gamepad disconnected:");
+    console.log(event.gamepad);
+    gamepadIndex = undefined
+});
 
-    // Keyboard events
-    window.addEventListener("keydown", e => {
-        pressedKeys.add(e.key);
-        if (document.activeElement === document.body &&
-            ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+// Keyboard events
+window.addEventListener("keydown", e => {
+    pressedKeys.add(e.key);
+    if (document.activeElement === document.body &&
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+    }
+});
+
+window.addEventListener("keyup", e => {
+    pressedKeys.delete(e.key);
+});
+
+window.addEventListener("load", e => {
+// Clickable input elements
+    for (const buttonName of ["a", "b", "start", "select", "up", "down", "left", "right"]) {
+        const button = document.getElementById(`button-${buttonName}`);
+        button.addEventListener("mousedown", e => {
+            pressedButtons.add(buttonName);
             e.preventDefault();
+        });
+        button.addEventListener("mouseup", e => {
+            pressedButtons.delete(buttonName);
+            e.preventDefault();
+        });
+        button.addEventListener("mouseleave", e => {
+            pressedButtons.delete(buttonName);
+            e.preventDefault();
+        });
+        button.addEventListener("touchstart", e => {
+            pressedButtons.add(buttonName);
+            e.preventDefault();
+        });
+        button.addEventListener("touchend", e => {
+            pressedButtons.delete(buttonName);
+            e.preventDefault();
+        });
+    }
+});
+
+function updateGamepadButtons() {
+    pressedGamepadButtons.clear();
+    for (const gamepad of navigator.getGamepads()) {
+        if (gamepad === null) continue;
+        for (let i = 0; i < gamepad.buttons.length; i++) {
+            if (gamepad.buttons[i].pressed) {
+                pressedGamepadButtons.add(i);
+            }
         }
-    });
-
-    window.addEventListener("keyup", e => {
-        pressedKeys.delete(e.key);
-    });
-
+    }
+}
 
 function isButtonPressed(buttonName) {
-    return pressedKeys.has(buttonMap[buttonName]);
+    return pressedButtons.has(buttonName)
+        || pressedKeys.has(keyboardMap[buttonName])
+        || pressedGamepadButtons.has(gamepadMap[buttonName]);
 }
 
 
 export {
     isButtonPressed,
+    updateGamepadButtons,
 };

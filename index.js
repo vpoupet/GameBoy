@@ -1,3 +1,4 @@
+"use strict";
 import { DMG } from "./src/dmg.js";
 const gb = new DMG();
 
@@ -129,38 +130,5 @@ window.onload = function () {
             e => {
                 gb.setViewAddress(gb.viewAddress - 0x80);
             });
-
-    for (const buttonName of ["a", "b", "start", "select", "up", "down", "left", "right"]) {
-        const button = document.getElementById(`button-${buttonName}`);
-        button.addEventListener("mousedown", e => {
-            press(buttonName);
-            e.preventDefault();
-        });
-        button.addEventListener("mouseup", e => {
-            release(buttonName);
-            e.preventDefault();
-        });
-        button.addEventListener("mouseleave", e => {
-            release(buttonName);
-            e.preventDefault();
-        });
-        button.addEventListener("touchstart", e => {
-            press(buttonName);
-            e.preventDefault();
-        });
-        button.addEventListener("touchend", e => {
-            release(buttonName);
-            e.preventDefault();
-        });
-    }
-
     reset();
 };
-
-function press(buttonName) {
-    pressedButtons.add(buttonName);
-}
-
-function release(buttonName) {
-    pressedButtons.delete(buttonName);
-}

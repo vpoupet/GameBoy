@@ -1,4 +1,4 @@
-import {isButtonPressed} from './input.js';
+import {isButtonPressed, updateGamepadButtons} from './input.js';
 import {CPU} from './cpu.js';
 import {MMU, hex} from './mmu.js';
 import {PPU} from './ppu.js';
@@ -114,6 +114,7 @@ class DMG {
 
     execFrame() {
         this.isNewFrame = false;
+        updateGamepadButtons();
         while (!this.isNewFrame) {
             this.cpuStep();
         }
