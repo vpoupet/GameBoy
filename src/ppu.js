@@ -21,7 +21,7 @@ class PPU {
         this.clock = 0;
         this.shouldDrawLines = true;
         this.upscaleFactor = 2;
-        this.upscaleData = undefined;
+        this.remakeData = undefined;
     }
 
     setUpscaleFactor(factor) {
@@ -34,51 +34,46 @@ class PPU {
         this.clearScreen();
     }
 
-    loadUpscaleData() {
-        this.upscaleData = {};
-        const tilesImage = new Image();
-        tilesImage.onload = function () {
-            const canvas = document.createElement("canvas");
-            canvas.width = tilesImage.width;
-            canvas.height = tilesImage.height;
-            const context = canvas.getContext('2d');
-            context.drawImage(tilesImage, 0, 0, canvas.width, canvas.height);
-            this.upscaleData.imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        }.bind(this);
-        tilesImage.src = `upscale/${this.dmg.gameTitle}/tiles.png`;
-        fetch(`upscale/${this.dmg.gameTitle}/tilemap.json`)
-            .then(response => response.json())
-            .then(data => {
-                this.upscaleData.map = {};
-                for (let i = 0; i < data.map.length; i++) {
-                    this.upscaleData.map[data.map[i]] = {x: i % 16, y: ~~(i / 16)};
+    loadRemakeData() {
+        this.remakeData = undefined;
+        fetch(`remake/${this.dmg.gameTitle}/tilemap.json`)
+            .then(response => {
+                if (response.ok) {
+                    return response.json()
+                } else {
+                    throw new Error('Remake data not found')
                 }
-                this.upscaleData.enabled = true;
-            });
-        this.enableUpscaleData();
+            })
+            .then(data => {
+                this.remakeData = {};
+                const tilesImage = new Image();
+                tilesImage.onload = function () {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = tilesImage.width;
+                    canvas.height = tilesImage.height;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(tilesImage, 0, 0, canvas.width, canvas.height);
+                    this.remakeData.imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                }.bind(this);
+                tilesImage.src = `remake/${this.dmg.gameTitle}/tiles.png`;
+
+                this.remakeData.map = {};
+                for (let i = 0; i < data.map.length; i++) {
+                    this.remakeData.map[data.map[i]] = {x: i % 16, y: ~~(i / 16)};
+                }
+                this.remakeData.enabled = false;
+            })
+            .catch();
     }
 
-    enableUpscaleData() {
-        if (this.upscaleData) {
-            this.upscaleData.enabled = true;
-            this.canvasList[0].style.backgroundImage = `url("upscale/${this.dmg.gameTitle}/bg.png")`;
+    toggleRemake() {
+        if (this.remakeData === undefined) return;
+        if (this.remakeData.enabled) {
+            this.remakeData.enabled = false;
+            this.canvasList[0].style.backgroundImage = "none";
         } else {
-            this.loadUpscaleData();
-        }
-    }
-
-    disableUpscaleData() {
-        this.upscaleData.enabled = false;
-        this.canvasList[0].style.backgroundImage = "none";
-    }
-
-    toggleUpscaleData() {
-        if (this.upscaleData === undefined) {
-            this.loadUpscaleData();
-        } else if (this.upscaleData.enabled) {
-            this.disableUpscaleData();
-        } else {
-            this.enableUpscaleData();
+            this.remakeData.enabled = true;
+            this.canvasList[0].style.backgroundImage = `url("remake/${this.dmg.gameTitle}/bg.png")`;
         }
     }
 
@@ -192,19 +187,19 @@ class PPU {
     }
 
     drawBGTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette) {
-        if (this.upscaleData && this.upscaleData.enabled) {
+        if (this.remakeData && this.remakeData.enabled) {
             const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
-            if (tileString in this.upscaleData.map) {
+            if (tileString in this.remakeData.map) {
                 const imageData = this.imageDataList[2];
-                const tilePosition = this.upscaleData.map[tileString];
+                const tilePosition = this.remakeData.map[tileString];
                 const imageBuffer = new Uint32Array(imageData.data.buffer);
-                const upscaleBuffer = new Uint32Array(this.upscaleData.imageData.data.buffer);
+                const upscaleBuffer = new Uint32Array(this.remakeData.imageData.data.buffer);
                 for (let i = 0; i < upscaleFactor; i++) {
                     for (let j = 0; j < 8 * upscaleFactor; j++) {
                         if (0 <= x * upscaleFactor + j && x * upscaleFactor + j < imageData.width) {
                             imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + j] =
                                 upscaleBuffer[
-                                ((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleData.imageData.width
+                                ((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.remakeData.imageData.width
                                 + tilePosition.x * 8 * upscaleFactor + j];
                         }
                     }
@@ -230,17 +225,17 @@ class PPU {
     drawObjectTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette, attributes) {
         const imageData = (attributes & 0x80) ? this.imageDataList[1] : this.imageDataList[3];
 
-        if (this.upscaleData && this.upscaleData.enabled) {
+        if (this.remakeData && this.remakeData.enabled) {
             const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
-            if (tileString in this.upscaleData.map) {
-                const tilePosition = this.upscaleData.map[tileString];
+            if (tileString in this.remakeData.map) {
+                const tilePosition = this.remakeData.map[tileString];
                 const imageBuffer = new Uint32Array(imageData.data.buffer);
-                const upscaleBuffer = new Uint32Array(this.upscaleData.imageData.data.buffer);
+                const upscaleBuffer = new Uint32Array(this.remakeData.imageData.data.buffer);
                 for (let i = 0; i < upscaleFactor; i++) {
                     for (let j = 0; j < 8 * upscaleFactor; j++) {
                         const dj = (attributes & 0x20) ? 8 * upscaleFactor - j - 1 : j;
                         if (0 <= x * upscaleFactor + dj && x * upscaleFactor + dj < imageData.width) {
-                            const color = upscaleBuffer[((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.upscaleData.imageData.width + tilePosition.x * 8 * upscaleFactor + j];
+                            const color = upscaleBuffer[((tilePosition.y * 8 + lineIndex) * upscaleFactor + i) * this.remakeData.imageData.width + tilePosition.x * 8 * upscaleFactor + j];
                             if (color !== 0) {
                                 imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + dj] = color;
                             }
@@ -343,7 +338,6 @@ class PPU {
 
     reset() {
         this.clearScreen();
-        this.upscaleData = undefined;
     }
 
     clearScreen() {

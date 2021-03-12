@@ -45,6 +45,7 @@ class DMG {
                     if (bytes[offset] === 0) break;
                     this.gameTitle += String.fromCharCode(bytes[offset]);
                 }
+                this.ppu.loadRemakeData();
                 this.reset(bytes, execBios)
             });
     }
