@@ -1,8 +1,7 @@
 "use strict";
 import { DMG } from "./src/dmg.js";
-const gb = new DMG();
+let gb = undefined;
 
-window.gb = gb;     // make accessible in the console
 
 function runToBreak() {
     let breakCondition = document.getElementById("break-condition").value;
@@ -24,26 +23,26 @@ function runToBreak() {
 
 function start() {
     gb.start();
-    document.getElementById("start-button").innerHTML = "Stop";
 }
 
 function stop() {
     gb.stop();
     document.getElementById("start-button").innerHTML = "Start";
-    gb.updateInfo();
 }
 
 function reset() {
+    if (gb) {
+        gb.stop();
+    }
     document.getElementById("serial-output").innerText = "";
     const romSelect = document.getElementById("rom-select");
     const skipBoot = document.getElementById("skip-boot").checked;
+    gb = new DMG();
+    window.gb = gb;
     gb.loadRom(`rom/${romSelect.value}.gb`, !skipBoot);
 }
 
 window.onload = function () {
-    // Screen canvas
-    gb.ppu.setScreenCanvas([...document.getElementsByClassName("screen-layer")]);
-
     // Execution buttons
     document.getElementById("start-button")
         .addEventListener("click", e => {
@@ -71,12 +70,8 @@ window.onload = function () {
     document.getElementById("remake-button").addEventListener("click", e => gb.ppu.toggleRemake());
 
     // ROM select
-    const romSelect = document.getElementById("rom-select");
-    romSelect.addEventListener("change", reset);
+    document.getElementById("rom-select").addEventListener("change", reset);
 
-    document.getElementById("update-each-frame").addEventListener("change", e => {
-        gb.shouldUpdateEachFrame = e.target.checked;
-    });
     // Break condition
     document.getElementById("break-condition")
         .addEventListener(
@@ -93,6 +88,11 @@ window.onload = function () {
             e => {
                 runToBreak();
             });
+
+    // Update each frame checkbox
+    document.getElementById("update-each-frame").addEventListener("change", e => {
+        gb.shouldUpdateEachFrame = e.target.checked;
+    });
 
     // Tiles and BG canvas
     const tilesCanvas = document.getElementById("tiles");
@@ -126,5 +126,6 @@ window.onload = function () {
             e => {
                 gb.setViewAddress(gb.viewAddress - 0x80);
             });
+
     reset();
 };

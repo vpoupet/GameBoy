@@ -1,7 +1,7 @@
 import {isButtonPressed, updateGamepadButtons} from './input.js';
 import {CPU} from './cpu.js';
 import {MMU, hex} from './mmu.js';
-import {PPU} from './ppu.js';
+import {PPU, GamePPU} from './ppu.js';
 import {asmCodes, asmCodesCB} from "./opcodes.js";
 
 
@@ -34,7 +34,7 @@ class DMG {
         this.gameTitle = undefined;
     }
 
-    loadRom(romFile, execBios=true) {
+    loadRom(romFile, execBios = true) {
         fetch(romFile)
             .then(response => response.arrayBuffer())
             .then(data => {
@@ -45,17 +45,21 @@ class DMG {
                     if (bytes[offset] === 0) break;
                     this.gameTitle += String.fromCharCode(bytes[offset]);
                 }
-                this.ppu.loadRemakeData();
-                this.reset(bytes, execBios)
+                if (this.gameTitle in GamePPU) {
+                    this.ppu = new GamePPU[this.gameTitle](this);
+                }
+                this.reset(bytes, execBios);
             });
     }
 
-    reset(cartridge, execBios=true) {
+    reset(cartridge, execBios = true) {
+        this.stop();
         this.clock = 0;
         this.mmu.reset(cartridge, execBios);
         this.cpu.reset(execBios);
         this.ppu.reset();
         this.updateInfo();
+        this.start();
     }
 
     /**
@@ -136,11 +140,16 @@ class DMG {
     start() {
         this.execFrame();
         this.requestID = requestAnimationFrame(this.start.bind(this));
+        document.getElementById("start-button").innerText = "Stop";
     }
 
     stop() {
-        window.cancelAnimationFrame(this.requestID);
-        this.requestID = undefined;
+        if (this.requestID) {
+            window.cancelAnimationFrame(this.requestID);
+            this.requestID = undefined;
+            this.updateInfo();
+        }
+        document.getElementById("start-button").innerText = "Start";
     }
 
     updateInfo() {
