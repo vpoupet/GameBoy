@@ -24,10 +24,11 @@ html {
   top: 124px;
   left: 138px;
 }
-#gameboy .screen-layer {
+#gameboy .screen-layer, #gameboy #parallax {
   position: absolute;
   background: none;
   width: 320px;
+  height: 288px;
   top: 145px;
   left: 156px;
 }

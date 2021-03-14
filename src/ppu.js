@@ -347,6 +347,8 @@ class RemakePPU extends PPU {
             backgroundImage: 'none',
             bgX: 0,
             bgY: 0,
+            parallaxImage: 'none',
+            parallaxDiv: document.getElementById("parallax"),
         };
         fetch(`remake/${dmg.gameTitle}/data.json`)
             .then(response => {
@@ -371,11 +373,13 @@ class RemakePPU extends PPU {
             });
     }
 
-    onRemakeLoad() {}
+    onRemakeLoad() {
+    }
 
     toggleRemake() {
         this.remake.enabled = !this.remake.enabled;
         this.canvasList[0].style.backgroundImage = this.remake.enabled ? this.remake.backgroundImage : 'none';
+        this.remake.parallaxDiv.style.backgroundImage = this.remake.enabled ? this.remake.parallaxImage : 'none';
     }
 
     drawBGTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette) {
@@ -472,21 +476,24 @@ const GamePPU = {
             if (0 < this.remake.state && this.remake.state <= 12) {
                 const scx = this.mmu.memory[0xff43];
                 const _c0ab = this.mmu.memory[0xc0ab] - 0x0c;
-                // bgX = -(_c0ab * 16 + ((scx + 8) % 16) - 8) * this.upscaleFactor;
                 bgX = -(_c0ab * 16 + (scx << 28 >> 28)) * this.upscaleFactor;
             }
             this.canvasList[0].style.backgroundPosition = `${bgX}px 0px`;
+            this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
         }
 
         onStateChange() {
-            const bgImage = this.remake.bg[this.remake.state];
-            if (bgImage !== undefined) {
-                this.remake.backgroundImage = `url("remake/SUPER MARIOLAND/${bgImage}")`;
-            } else {
-                this.remake.backgroundImage = "none";
-            }
-            if (this.enabled) {
+            const bg = this.remake.bg[this.remake.state];
+            this.remake.backgroundImage = bg ? `url("remake/SUPER MARIOLAND/${bg}")` : 'none';
+            const parallax = this.remake.parallax[this.remake.state];
+            this.remake.parallaxImage = parallax ? `url("remake/SUPER MARIOLAND/${parallax}")` : 'none';
+
+            if (this.remake.enabled) {
                 this.canvasList[0].style.backgroundImage = this.remake.backgroundImage;
+                this.remake.parallaxDiv.style.backgroundImage = this.remake.parallaxImage;
+            } else {
+                this.canvasList[0].style.backgroundImage = 'none';
+                this.remake.parallaxDiv.style.backgroundImage = 'none';
             }
         }
 
