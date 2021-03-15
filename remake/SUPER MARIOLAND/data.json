@@ -2,13 +2,14 @@
   "parallax": [
     null,
     "bg0.png",
-    "bg1.png"
+    "bg1.png",
+    "bg2.png"
   ],
   "bg": [
     "title.jpg",
     "level1-1.png",
     "level1-2.png",
-    null,
+    "level1-3.png",
     null,
     null,
     null,
