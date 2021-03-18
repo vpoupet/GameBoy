@@ -480,6 +480,11 @@ const GamePPU = {
             }
             this.canvasList[0].style.backgroundPosition = `${bgX}px 0px`;
             this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
+
+            if (this.remake.enabled) {
+                // Draw frame
+
+            }
         }
 
         onStateChange() {
