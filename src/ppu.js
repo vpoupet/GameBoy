@@ -487,8 +487,6 @@ class SuperMarioLandPPU extends PPU {
         const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800);
         const _ff43 = this.mmu.memory[0xff43];  // SCX - Scroll X
 
-        const x0 = _ff43 >> 3; // x-coordinate of top-left drawn tile in tile map
-
         // Top HUD (2 first tile rows)
         for (let y = 0; y < 2; y++) {
             for (let x = 0; x < 20; x++) {
@@ -498,15 +496,22 @@ class SuperMarioLandPPU extends PPU {
                 this.drawTile(tileOffset, 8 * x, 8 * y, 2);
             }
         }
+
         // scrollable background
+        const x0 = _ff43 >> 3; // x-coordinate of top-left drawn tile in tile map
         for (let y = 2; y < 18; y++) {
             for (let x = x0; x <= x0 + 20; x++) {
                 const indexInTileMap = 32 * (y % 32) + (x % 32);
                 const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
                 const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTile(tileOffset, (8 * (x % 32) - _ff43) & 0xff, 8 * y, 2);
+                let tileX = 8 * (x % 32) - _ff43;
+                if (tileX <= -8) {
+                    tileX &= 0xff;
+                }
+                this.drawTile(tileOffset, tileX, 8 * y, 2);
             }
         }
+
         // window
         if (_ff40 & 0x20) {
             const windowY = this.mmu.memory[0xff4a];
