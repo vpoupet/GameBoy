@@ -306,15 +306,6 @@ class PPU {
         }
     }
 
-    dumpTileData() {
-        const tiles = {};
-        for (let offset = 0x8000; offset < 0x9800; offset += 16) {
-            const array = Array.from(this.mmu.memory.slice(offset, offset + 16));
-            tiles[offset] = array.map(x => ("0" + x.toString(16)).slice(-2)).join("");
-        }
-        return tiles;
-    }
-
     searchOAM() {
         this.objSize = this.mmu.memory[0xff40] & 0x04 ? 16 : 8;
         let lineObjects = [];
@@ -339,7 +330,7 @@ class PPU {
 }
 
 
-class RemakePPU extends PPU {
+class SuperMarioLandPPU extends PPU {
     constructor(dmg) {
         super(dmg);
         this.remake = {
@@ -376,6 +367,71 @@ class RemakePPU extends PPU {
     }
 
     onRemakeLoad() {
+        this.onStateChange();
+        this.remake.tilemap = this.remake.tilemaps[0];
+    }
+
+    onStateChange() {
+        const bg = this.remake.bg[this.remake.state];
+        this.remake.backgroundImage = bg ? `url("remake/SUPER MARIOLAND/${bg}")` : 'none';
+        const parallax = this.remake.parallax[this.remake.state];
+        this.remake.parallaxImage = parallax ? `url("remake/SUPER MARIOLAND/${parallax}")` : 'none';
+
+        if (this.remake.enabled) {
+            this.canvasList[0].style.backgroundImage = this.remake.backgroundImage;
+            this.remake.parallaxDiv.style.backgroundImage = this.remake.parallaxImage;
+        } else {
+            this.canvasList[0].style.backgroundImage = 'none';
+            this.remake.parallaxDiv.style.backgroundImage = 'none';
+        }
+    }
+
+    updateState() {
+        let state;
+        switch (this.mmu.memory[0x9800]) {
+            case 0x16:
+                // Playing a level
+                if (this.mmu.memory[0x9840] === 0x7f) {
+                    // inside a pipe
+                    state = 12;
+                    break;
+                }
+                const worldNumber = this.mmu.memory[0x982c];
+                const stageNumber = this.mmu.memory[0x982e];
+                state = 3 * (worldNumber - 1) + stageNumber - 1;
+                break;
+            case 0x3c:
+                // Title screen
+                state = 13;
+                break;
+            case 0xf5:
+                // Bonus screen
+                state = 14;
+                break;
+        }
+        if (state !== undefined && this.remake.state !== state) {
+            this.remake.state = state;
+            this.onStateChange();
+        }
+    }
+
+    endFrame() {
+        super.endFrame();
+        if (this.remake.enabled) {
+            this.updateState();
+
+            let bgX = 0;
+            if (this.remake.state < 12) {
+                const scx = this.mmu.memory[0xff43];
+                const _c0ab = this.mmu.memory[0xc0ab] - 0x0c;
+                bgX = -(_c0ab * 16 + (scx << 28 >> 28)) * this.upscaleFactor;
+            }
+            this.canvasList[0].style.backgroundPosition = `${bgX}px 0px`;
+            this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
+
+            this.drawObjects();
+            this.drawBackgroundTiles();
+        }
     }
 
     toggleRemake() {
@@ -388,116 +444,55 @@ class RemakePPU extends PPU {
         if (!this.remake.enabled) {
             super.drawBGTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette);
         }
-
-        // const tileString = this.mmu.memory.slice(tileOffset, tileOffset + 16);
-        // const tilePosition = this.remake.tilemap[tileOffset]?.[tileString];
-        // if (tilePosition !== undefined) {
-        //         // const tx = tilePosition % this.remake.tilesPerLine;
-        //         // const ty = ~~(tilePosition / this.remake.tilesPerLine);
-        //         // const imageData = this.imageDataList[2];
-        //         // const imageBuffer = new Uint32Array(imageData.data.buffer);
-        //         // const tilesBuffer = new Uint32Array(this.remake.tilesImageData.data.buffer);
-        //         // for (let i = 0; i < upscaleFactor; i++) {
-        //         //     for (let j = 0; j < 8 * upscaleFactor; j++) {
-        //         //         if (0 <= x * upscaleFactor + j && x * upscaleFactor + j < imageData.width) {
-        //         //             imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + j] =
-        //         //                 tilesBuffer[
-        //         //                 ((ty * 8 + lineIndex) * upscaleFactor + i) * this.remake.tilesImageData.width
-        //         //                 + tx * 8 * upscaleFactor + j];
-        //         //         }
-        //         //     }
-        //         // }
-        //         const tx = tilePosition % this.remake.tilesPerLine;
-        //         const ty = ~~(tilePosition / this.remake.tilesPerLine);
-        //
-        //         this.contextList[2].drawImage(
-        //             this.remake.tilesImage,
-        //             8 * tx * this.upscaleFactor,
-        //             (8 * ty + lineIndex) * this.upscaleFactor,
-        //             8 * this.upscaleFactor,
-        //             this.upscaleFactor,
-        //             x * this.upscaleFactor,
-        //             y * this.upscaleFactor,
-        //             8 * this.upscaleFactor,
-        //             this.upscaleFactor,
-        //         )
-        //         // const imageData = this.imageDataList[2];
-        //         // const imageBuffer = new Uint32Array(imageData.data.buffer);
-        //         // const tilesBuffer = new Uint32Array(this.remake.tilesImageData.data.buffer);
-        //         // for (let i = 0; i < upscaleFactor; i++) {
-        //         //     for (let j = 0; j < 8 * upscaleFactor; j++) {
-        //         //         if (0 <= x * upscaleFactor + j && x * upscaleFactor + j < imageData.width) {
-        //         //             imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + j] =
-        //         //                 tilesBuffer[
-        //         //                 ((ty * 8 + lineIndex) * upscaleFactor + i) * this.remake.tilesImageData.width
-        //         //                 + tx * 8 * upscaleFactor + j];
-        //         //         }
-        //         //     }
-        //         // }
-        //     // }
-        // }
     }
 
     drawObjectTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette, attributes) {
         if (!this.remake.enabled) {
             return super.drawObjectTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette, attributes);
         }
+    }
 
-        // if (tileOffset in this.remake.tilemap) {
-        //     // const tileString = Array.from(this.mmu.memory.slice(tileOffset, tileOffset + 16)).map(x => ("0" + x.toString(16)).slice(-2)).join("");
-        //     const tileString = this.mmu.memory.slice(tileOffset, tileOffset + 16);
-        //     const tilePosition = this.remake.tilemap[tileOffset][tileString];
-        //     if (tilePosition !== undefined) {
-        //         const tx = tilePosition % this.remake.tilesPerLine;
-        //         const ty = ~~(tilePosition / this.remake.tilesPerLine);
-        //         const imageData = (attributes & 0x80) ? this.imageDataList[1] : this.imageDataList[3];
-        //         const imageBuffer = new Uint32Array(imageData.data.buffer);
-        //         const tilesBuffer = new Uint32Array(this.remake.tilesImageData.data.buffer);
-        //         for (let i = 0; i < upscaleFactor; i++) {
-        //             for (let j = 0; j < 8 * upscaleFactor; j++) {
-        //                 const dj = (attributes & 0x20) ? 8 * upscaleFactor - j - 1 : j;
-        //                 if (0 <= x * upscaleFactor + dj && x * upscaleFactor + dj < imageData.width) {
-        //                     const color = tilesBuffer[((ty * 8 + lineIndex) * upscaleFactor + i) * this.remake.tilesImageData.width + tx * 8 * upscaleFactor + j];
-        //                     if (color !== 0) {
-        //                         imageBuffer[(y * upscaleFactor + i) * imageData.width + x * upscaleFactor + dj] = color;
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+    drawTile(tileOffset, x, y, layerIndex) {
+        const tileCode = this.mmu.memory.slice(tileOffset, tileOffset + 16);
+        const remakeIndex = this.remake.tilemap[tileOffset]?.[tileCode];
+        if (remakeIndex !== undefined) {
+            this.contextList[layerIndex].drawImage(
+                this.remake.tilesImage,
+                8 * (remakeIndex % 16) * this.upscaleFactor,
+                8 * ~~(remakeIndex / 16) * this.upscaleFactor,
+                8 * this.upscaleFactor,
+                8 * this.upscaleFactor,
+                x * this.upscaleFactor,
+                y * this.upscaleFactor,
+                8 * this.upscaleFactor,
+                8 * this.upscaleFactor,
+            )
+        }
     }
 
     drawBackgroundTiles() {
         const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
         const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800);
-
-        const _ff42 = this.mmu.memory[0xff42];  // SCY - Scroll Y
         const _ff43 = this.mmu.memory[0xff43];  // SCX - Scroll X
 
-        const y0 = _ff42 >> 3; // y-coordinate of top-left drawn tile in tile map
         const x0 = _ff43 >> 3; // x-coordinate of top-left drawn tile in tile map
 
-        for (let y = y0; y <= y0 + 18; y++) {
+        // Top HUD (2 first tile rows)
+        for (let y = 0; y < 2; y++) {
+            for (let x = 0; x < 20; x++) {
+                const indexInTileMap = 32 * y + x;
+                const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
+                const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+                this.drawTile(tileOffset, 8 * x, 8 * y, 1);
+            }
+        }
+        // scrollable background
+        for (let y = 2; y < 18; y++) {
             for (let x = x0; x <= x0 + 20; x++) {
                 const indexInTileMap = 32 * (y % 32) + (x % 32);
                 const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
                 const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                const tileCode = this.mmu.memory.slice(tileOffset, tileOffset + 16);
-                const remakeIndex = this.remake.tilemap[tileOffset]?.[tileCode];
-                if (remakeIndex !== undefined) {
-                    this.contextList[1].drawImage(
-                        this.remake.tilesImage,
-                        8 * this.upscaleFactor * (remakeIndex % 16),
-                        8 * this.upscaleFactor * ~~(remakeIndex / 16),
-                        8 * this.upscaleFactor,
-                        8 * this.upscaleFactor,
-                        ((8 * (x % 32) - _ff43) & 0xff) * this.upscaleFactor,
-                        ((8 * (y % 32) - _ff42) & 0xff) * this.upscaleFactor,
-                        8 * this.upscaleFactor,
-                        8 * this.upscaleFactor,
-                    )
-                }
+                this.drawTile(tileOffset, (8 * (x % 32) - _ff43) & 0xff, 8 * y, 1);
             }
         }
     }
@@ -542,71 +537,7 @@ class RemakePPU extends PPU {
 
 
 const GamePPU = {
-    "SUPER MARIOLAND": class extends RemakePPU {
-        endFrame() {
-            super.endFrame();
-
-            let state;
-            switch (this.mmu.memory[0x9800]) {
-                case 0x3c:
-                    // Title screen
-                    state = 0;
-                    break;
-                case 0xf5:
-                    // Bonus screen
-                    state = 14;
-                    break;
-                case 0x16:
-                    // Playing a level
-                    if (this.mmu.memory[0x9840] === 0x7f) {
-                        // inside a pipe
-                        state = 13;
-                        break;
-                    }
-                    const worldNumber = this.mmu.memory[0x982c];
-                    const stageNumber = this.mmu.memory[0x982e];
-                    state = 3 * (worldNumber - 1) + stageNumber;
-            }
-            if (state !== undefined && this.remake.state !== state) {
-                this.remake.state = state;
-                this.onStateChange();
-            }
-
-            let bgX = 0;
-            if (0 < this.remake.state && this.remake.state <= 12) {
-                const scx = this.mmu.memory[0xff43];
-                const _c0ab = this.mmu.memory[0xc0ab] - 0x0c;
-                bgX = -(_c0ab * 16 + (scx << 28 >> 28)) * this.upscaleFactor;
-            }
-            this.canvasList[0].style.backgroundPosition = `${bgX}px 0px`;
-            this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
-
-            if (this.remake.enabled) {
-                this.drawObjects();
-                this.drawBackgroundTiles();
-            }
-        }
-
-        onStateChange() {
-            const bg = this.remake.bg[this.remake.state];
-            this.remake.backgroundImage = bg ? `url("remake/SUPER MARIOLAND/${bg}")` : 'none';
-            const parallax = this.remake.parallax[this.remake.state];
-            this.remake.parallaxImage = parallax ? `url("remake/SUPER MARIOLAND/${parallax}")` : 'none';
-
-            if (this.remake.enabled) {
-                this.canvasList[0].style.backgroundImage = this.remake.backgroundImage;
-                this.remake.parallaxDiv.style.backgroundImage = this.remake.parallaxImage;
-            } else {
-                this.canvasList[0].style.backgroundImage = 'none';
-                this.remake.parallaxDiv.style.backgroundImage = 'none';
-            }
-        }
-
-        onRemakeLoad() {
-            this.onStateChange();
-            this.remake.tilemap = this.remake.tilemaps[0];
-        }
-    },
+    "SUPER MARIOLAND": SuperMarioLandPPU,
 }
 
 export {PPU, GamePPU};
