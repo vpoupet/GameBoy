@@ -36,6 +36,11 @@ class PPU {
         this.setMode(0);
         this.updateCoincidenceFlag();
         this.clearScreen();
+        // clear backgrounds (from possible remakes)
+        for (let i = 0; i < this.canvasList.length; i++) {
+            this.canvasList[i].style.backgroundImage = "none";
+        }
+        document.getElementById("parallax").style.backgroundImage = "none";
     }
 
     setMode(val) {
@@ -364,6 +369,13 @@ class SuperMarioLandPPU extends PPU {
                 }.bind(this);
                 this.remake.tilesImage.src = `remake/${dmg.gameTitle}/tiles.png`;
             });
+    }
+
+    reset() {
+        super.reset();
+        if (this.remake?.loaded) {
+            this.onStateChange();
+        }
     }
 
     onRemakeLoad() {

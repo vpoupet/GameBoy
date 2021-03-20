@@ -45,6 +45,9 @@ window.addEventListener("keydown", e => {
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
         e.preventDefault();
     }
+    if (e.key === "t") {
+        gb.ppu.toggleRemake();
+    }
 });
 
 window.addEventListener("keyup", e => {
