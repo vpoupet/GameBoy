@@ -373,15 +373,15 @@ class SuperMarioLandPPU extends PPU {
 
     onStateChange() {
         const bg = this.remake.bg[this.remake.state];
-        this.remake.backgroundImage = bg ? `url("remake/SUPER MARIOLAND/${bg}")` : 'none';
+        this.remake.backgroundImage = bg ? `url('remake/SUPER MARIOLAND/${bg}')` : 'none';
         const parallax = this.remake.parallax[this.remake.state];
-        this.remake.parallaxImage = parallax ? `url("remake/SUPER MARIOLAND/${parallax}")` : 'none';
+        this.remake.parallaxImage = parallax ? `url('remake/SUPER MARIOLAND/${parallax}')` : 'none';
 
         if (this.remake.enabled) {
-            this.canvasList[0].style.backgroundImage = this.remake.backgroundImage;
+            this.canvasList[2].style.backgroundImage = this.remake.backgroundImage;
             this.remake.parallaxDiv.style.backgroundImage = this.remake.parallaxImage;
         } else {
-            this.canvasList[0].style.backgroundImage = 'none';
+            this.canvasList[2].style.backgroundImage = 'none';
             this.remake.parallaxDiv.style.backgroundImage = 'none';
         }
     }
@@ -426,7 +426,7 @@ class SuperMarioLandPPU extends PPU {
                 const _c0ab = this.mmu.memory[0xc0ab] - 0x0c;
                 bgX = -(_c0ab * 16 + (scx << 28 >> 28)) * this.upscaleFactor;
             }
-            this.canvasList[0].style.backgroundPosition = `${bgX}px 0px`;
+            this.canvasList[2].style.backgroundPosition = `${bgX}px 0px`;
             this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
 
             this.drawObjects();
@@ -436,7 +436,7 @@ class SuperMarioLandPPU extends PPU {
 
     toggleRemake() {
         this.remake.enabled = !this.remake.enabled;
-        this.canvasList[0].style.backgroundImage = this.remake.enabled ? this.remake.backgroundImage : 'none';
+        this.canvasList[2].style.backgroundImage = this.remake.enabled ? this.remake.backgroundImage : 'none';
         this.remake.parallaxDiv.style.backgroundImage = this.remake.enabled ? this.remake.parallaxImage : 'none';
     }
 
@@ -483,7 +483,7 @@ class SuperMarioLandPPU extends PPU {
                 const indexInTileMap = 32 * y + x;
                 const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
                 const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTile(tileOffset, 8 * x, 8 * y, 1);
+                this.drawTile(tileOffset, 8 * x, 8 * y, 2);
             }
         }
         // scrollable background
@@ -492,7 +492,21 @@ class SuperMarioLandPPU extends PPU {
                 const indexInTileMap = 32 * (y % 32) + (x % 32);
                 const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
                 const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTile(tileOffset, (8 * (x % 32) - _ff43) & 0xff, 8 * y, 1);
+                this.drawTile(tileOffset, (8 * (x % 32) - _ff43) & 0xff, 8 * y, 2);
+            }
+        }
+        // window
+        if (_ff40 & 0x20) {
+            const windowY = this.mmu.memory[0xff4a];
+            const windowX = this.mmu.memory[0xff4b] - 7;
+            const windowTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800);
+            for (let y = 0; windowY + 8 * y < 144; y++) {
+                for (let x = 0; windowX + 8 * x < 160; x++) {
+                    const indexInTileMap = 32 * y + x;
+                    const tileIndex = this.mmu.memory[windowTileMapOffset + indexInTileMap];
+                    const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+                    this.drawTile(tileOffset, 8 * x + windowX, 8 * y + windowY, 2);
+                }
             }
         }
     }
