@@ -129,6 +129,7 @@ class DMG {
     execFrame() {
         this.isNewFrame = false;
         updateGamepadButtons();
+        this.ppu.startFrame();
         while (!this.isNewFrame) {
             this.cpuStep();
         }

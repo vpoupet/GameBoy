@@ -1,5 +1,6 @@
 .idea/
 venv/
+.venv/
 node_modules/
 coverage/
 *.afphoto
