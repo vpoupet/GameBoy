@@ -25,7 +25,7 @@ class Tile:
     def is_empty(self):
         return not np.any(self.array)
 
-    def string_id(self):
+    def array_id(self):
         def color_index(color):
             for i, c in enumerate(reference_colors):
                 if (color == c).all():
@@ -33,7 +33,7 @@ class Tile:
 
         normal_tile = self.array[::2, ::2]
         indexed_tile = np.apply_along_axis(color_index, 2, normal_tile)
-        result = ""
+        result = []
         for line in indexed_tile:
             byte0 = 0
             byte1 = 0
@@ -42,9 +42,9 @@ class Tile:
                 byte0 += c % 2
                 byte1 *= 2
                 byte1 += c // 2
-            result += hex(byte0)[2:].zfill(2)
-            result += hex(byte1)[2:].zfill(2)
-        return result
+            result.append(byte0)
+            result.append(byte1)
+        return ','.join(str(x) for x in result)
 
 
 class Tileset:
@@ -110,7 +110,7 @@ def make_tilemap(remake_tiles_img, reference_tiles_img, tileset=None):
                 offset_str = str(tile_offset)
                 if offset_str not in tilemap:
                     tilemap[offset_str] = {}
-                tilemap[offset_str][reference_tile.string_id()] = tile_index
+                tilemap[offset_str][reference_tile.array_id()] = tile_index
             tile_offset += 16
     return tilemap, tileset
 
@@ -127,5 +127,5 @@ if __name__ == '__main__':
     tileset.save_as('SUPER MARIOLAND/tiles.png')
     data['tilemaps'].append(tilemap)
     with open('SUPER MARIOLAND/data.json', 'w') as data_file:
-        json.dump(data, data_file, indent=2)
+        json.dump(data, data_file)
 
