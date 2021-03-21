@@ -442,7 +442,6 @@ class SuperMarioLandPPU extends PPU {
             this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
 
             this.drawObjects();
-            this.drawBackgroundTiles();
         }
     }
 
@@ -452,15 +451,42 @@ class SuperMarioLandPPU extends PPU {
         this.remake.parallaxDiv.style.backgroundImage = this.remake.enabled ? this.remake.parallaxImage : 'none';
     }
 
-    drawBGTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette) {
+    drawLine(ly) {
         if (!this.remake.enabled) {
-            super.drawBGTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette);
-        }
-    }
+            return super.drawLine(ly);
+        } else {
+            const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
 
-    drawObjectTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette, attributes) {
-        if (!this.remake.enabled) {
-            return super.drawObjectTileLine(tileOffset, lineIndex, x, y, upscaleFactor, palette, attributes);
+            if (ly % 8 === 0) {
+                // draw a row of BG tiles
+                const y = ly >> 3;
+                const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800);
+                const _ff43 = ly === 0 ? 0 : this.mmu.memory[0xff43];  // SCX - Scroll X (hack to fix first line shaking)
+                const x0 = _ff43 >> 3; // x-coordinate of top-left drawn tile in tile map
+                for (let x = x0; x <= x0 + 20; x++) {
+                    const indexInTileMap = 32 * (y % 32) + (x % 32);
+                    const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
+                    const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+                    let tileX = 8 * (x % 32) - _ff43;
+                    if (tileX <= -8) {
+                        tileX &= 0xff;
+                    }
+                    this.drawTile(tileOffset, tileX, ly, 2);
+                }
+            }
+            // check for window
+            const windowY = this.mmu.memory[0xff4a];
+            if ((_ff40 & 0x20) && (windowY === ly)) {
+                // draw window here
+                const windowX = this.mmu.memory[0xff4b] - 7;
+                const windowTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800);
+                for (let x = 0; windowX + 8 * x < 160; x++) {
+                    const indexInTileMap = x;
+                    const tileIndex = this.mmu.memory[windowTileMapOffset + indexInTileMap];
+                    const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+                    this.drawTile(tileOffset, 8 * x + windowX, windowY, 2);
+                }
+            }
         }
     }
 
@@ -479,52 +505,6 @@ class SuperMarioLandPPU extends PPU {
                 8 * this.upscaleFactor,
                 8 * this.upscaleFactor,
             )
-        }
-    }
-
-    drawBackgroundTiles() {
-        const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
-        const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800);
-        const _ff43 = this.mmu.memory[0xff43];  // SCX - Scroll X
-
-        // Top HUD (2 first tile rows)
-        for (let y = 0; y < 2; y++) {
-            for (let x = 0; x < 20; x++) {
-                const indexInTileMap = 32 * y + x;
-                const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
-                const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTile(tileOffset, 8 * x, 8 * y, 2);
-            }
-        }
-
-        // scrollable background
-        const x0 = _ff43 >> 3; // x-coordinate of top-left drawn tile in tile map
-        for (let y = 2; y < 18; y++) {
-            for (let x = x0; x <= x0 + 20; x++) {
-                const indexInTileMap = 32 * (y % 32) + (x % 32);
-                const tileIndex = this.mmu.memory[bgTileMapOffset + indexInTileMap];
-                const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                let tileX = 8 * (x % 32) - _ff43;
-                if (tileX <= -8) {
-                    tileX &= 0xff;
-                }
-                this.drawTile(tileOffset, tileX, 8 * y, 2);
-            }
-        }
-
-        // window
-        if (_ff40 & 0x20) {
-            const windowY = this.mmu.memory[0xff4a];
-            const windowX = this.mmu.memory[0xff4b] - 7;
-            const windowTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800);
-            for (let y = 0; windowY + 8 * y < 144; y++) {
-                for (let x = 0; windowX + 8 * x < 160; x++) {
-                    const indexInTileMap = 32 * y + x;
-                    const tileIndex = this.mmu.memory[windowTileMapOffset + indexInTileMap];
-                    const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                    this.drawTile(tileOffset, 8 * x + windowX, 8 * y + windowY, 2);
-                }
-            }
         }
     }
 
