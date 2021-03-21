@@ -338,6 +338,7 @@ class PPU {
 class SuperMarioLandPPU extends PPU {
     constructor(dmg) {
         super(dmg);
+        this.windowY = undefined;
         this.remake = {
             state: 0,
             loaded: false,
@@ -442,6 +443,7 @@ class SuperMarioLandPPU extends PPU {
             this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
 
             this.drawObjects();
+            this.drawWindow();
         }
     }
 
@@ -473,21 +475,26 @@ class SuperMarioLandPPU extends PPU {
                     }
                     this.drawTile(tileOffset, tileX, ly, 2);
                 }
-            }
-            // check for window
-            const windowY = this.mmu.memory[0xff4a];
-            if ((_ff40 & 0x20) && (windowY === ly)) {
-                // draw window here
-                const windowX = this.mmu.memory[0xff4b] - 7;
-                const windowTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800);
-                for (let x = 0; windowX + 8 * x < 160; x++) {
-                    const indexInTileMap = x;
-                    const tileIndex = this.mmu.memory[windowTileMapOffset + indexInTileMap];
-                    const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                    this.drawTile(tileOffset, 8 * x + windowX, windowY, 2);
+                // check for window
+                if (_ff40 & 0x20) {
+                    this.windowY = this.mmu.memory[0xff4a];
                 }
             }
         }
+    }
+
+    drawWindow() {
+        if (this.windowY !== undefined) {
+            const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
+            const windowX = this.mmu.memory[0xff4b] - 7;
+            const windowTileMapOffset = (_ff40 & 0x40 ? 0x9c00 : 0x9800);
+            for (let x = 0; windowX + 8 * x < 160; x++) {
+                const tileIndex = this.mmu.memory[windowTileMapOffset + x];
+                const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
+                this.drawTile(tileOffset, 8 * x + windowX, this.windowY, 2);
+            }
+        }
+        this.windowY = undefined;
     }
 
     drawTile(tileOffset, x, y, layerIndex) {
