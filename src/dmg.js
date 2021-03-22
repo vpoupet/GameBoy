@@ -60,6 +60,12 @@ class DMG {
         this.ppu.reset();
         this.updateInfo();
         this.start();
+
+        // clear backgrounds (from possible remakes)
+        for (const canvas of document.getElementsByClassName("screen-layer")) {
+            canvas.style.backgroundImage = "none";
+        }
+        document.getElementById("parallax").style.backgroundImage = "none";
     }
 
     /**

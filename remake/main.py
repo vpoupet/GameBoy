@@ -1,5 +1,6 @@
 import json
 import math
+import os
 
 import numpy as np
 from PIL import Image
@@ -30,6 +31,7 @@ class Tile:
             for i, c in enumerate(reference_colors):
                 if (color == c).all():
                     return i
+            raise Exception("Invalid color")
 
         normal_tile = self.array[::2, ::2]
         indexed_tile = np.apply_along_axis(color_index, 2, normal_tile)
@@ -87,10 +89,7 @@ class Tileset:
         return im
 
 
-def make_tilemap(remake_tiles_img, reference_tiles_img, tileset=None):
-    if tileset is None:
-        tileset = Tileset()
-
+def make_tilemap(remake_tiles_img, reference_tiles_img, tileset):
     if isinstance(remake_tiles_img, str):
         remake_tiles_img = np.array(Image.open(remake_tiles_img))
     if isinstance(reference_tiles_img, str):
@@ -112,20 +111,47 @@ def make_tilemap(remake_tiles_img, reference_tiles_img, tileset=None):
                     tilemap[offset_str] = {}
                 tilemap[offset_str][reference_tile.array_id()] = tile_index
             tile_offset += 16
-    return tilemap, tileset
+    return tilemap
 
 
 def append_tilemap(data, tilemap):
     data['tilemaps'].append(tilemap)
 
 
-if __name__ == '__main__':
-    tilemap, tileset = make_tilemap("SUPER MARIOLAND/tiles/tiles01.png", "SUPER MARIOLAND/tiles/tiles01-ref.png")
-    with open('SUPER MARIOLAND/data.json') as data_file:
-        data = json.load(data_file)
+def load_data(filename):
+    with open(filename) as data_file:
+        return json.load(data_file)
 
-    tileset.save_as('SUPER MARIOLAND/tiles.png')
-    data['tilemaps'].append(tilemap)
-    with open('SUPER MARIOLAND/data.json', 'w') as data_file:
+
+def save_data(data, filename):
+    with open(filename, 'w') as data_file:
         json.dump(data, data_file)
 
+
+def make_data(root_dir, page_sets):
+    datafile = os.path.join(root_dir, "data.json")
+    tiles_dir = os.path.join(root_dir, "tiles")
+    tileset = Tileset()
+    data = load_data(datafile)
+    data['tilemaps'] = []
+    for s in page_sets:
+        if not isinstance(s, tuple):
+            s = (s,)
+        tilemap = {}
+        for page in s:
+            tm = make_tilemap(
+                os.path.join(tiles_dir, page + ".png"),
+                os.path.join(tiles_dir, page + "-ref.png"),
+                tileset)
+            for key in tm:
+                if key in tilemap:
+                    tilemap[key].update(tm[key])
+                else:
+                    tilemap[key] = tm[key]
+        data['tilemaps'].append(tilemap)
+    save_data(data, datafile)
+    tileset.save_as(os.path.join(root_dir, "tiles.png"))
+
+
+if __name__ == '__main__':
+    make_data("SUPER MARIOLAND", ("level-00", "pipe", "title", "bonus"))

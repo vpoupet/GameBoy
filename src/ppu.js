@@ -36,11 +36,6 @@ class PPU {
         this.setMode(0);
         this.updateCoincidenceFlag();
         this.clearScreen();
-        // clear backgrounds (from possible remakes)
-        for (let i = 0; i < this.canvasList.length; i++) {
-            this.canvasList[i].style.backgroundImage = "none";
-        }
-        document.getElementById("parallax").style.backgroundImage = "none";
     }
 
     setMode(val) {
@@ -339,16 +334,15 @@ class SuperMarioLandPPU extends PPU {
     constructor(dmg) {
         super(dmg);
         this.windowY = undefined;
-        this.remake = {
-            state: 0,
-            loaded: false,
-            enabled: false,
-            backgroundImage: 'none',
-            bgX: 0,
-            bgY: 0,
-            parallaxImage: 'none',
-            parallaxDiv: document.getElementById("parallax"),
-        };
+        this.state = 0;
+        this.remakeLoaded = false;
+        this.remakeEnabled = false;
+        this.backgroundImage = 'none';
+        this.parallaxImage = 'none';
+        this.parallaxDiv = document.getElementById("parallax");
+        this.scrollX = 0;
+        this.isInLevel = false;
+
         fetch(`remake/${dmg.gameTitle}/data.json`)
             .then(response => {
                 if (response.ok) {
@@ -356,53 +350,58 @@ class SuperMarioLandPPU extends PPU {
                 }
             })
             .then(data => {
-                Object.assign(this.remake, data);
-                this.remake.tilesImage = new Image();
-                this.remake.tilesImage.onload = function () {
+                this.remakeData = data;
+                this.tilesImage = new Image();
+                this.tilesImage.onload = function () {
                     const canvas = document.createElement('canvas');
-                    canvas.width = this.remake.tilesImage.width;
-                    canvas.height = this.remake.tilesImage.height;
+                    canvas.width = this.tilesImage.width;
+                    canvas.height = this.tilesImage.height;
                     const context = canvas.getContext('2d');
-                    context.drawImage(this.remake.tilesImage, 0, 0, canvas.width, canvas.height);
-                    this.remake.tilesImageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    this.remake.loaded = true;
+                    context.drawImage(this.tilesImage, 0, 0, canvas.width, canvas.height);
+                    this.tilesImageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    this.remakeloaded = true;
                     this.onRemakeLoad();
                 }.bind(this);
-                this.remake.tilesImage.src = `remake/${dmg.gameTitle}/tiles.png`;
+                this.tilesImage.src = 'remake/SUPER MARIOLAND/tiles.png';
             });
     }
 
     reset() {
         super.reset();
-        if (this.remake?.loaded) {
+        if (this.remakeLoaded) {
             this.onStateChange();
         }
     }
 
     onRemakeLoad() {
         this.onStateChange();
-        this.remake.tilemap = this.remake.tilemaps[0];
+        this.tilemapIndex = 0;
     }
 
     onStateChange() {
-        const bg = this.remake.bg[this.remake.state];
-        this.remake.backgroundImage = bg ? `url('remake/SUPER MARIOLAND/${bg}')` : 'none';
-        const parallax = this.remake.parallax[this.remake.state];
-        this.remake.parallaxImage = parallax ? `url('remake/SUPER MARIOLAND/${parallax}')` : 'none';
-
-        if (this.remake.enabled) {
-            this.canvasList[2].style.backgroundImage = this.remake.backgroundImage;
-            this.remake.parallaxDiv.style.backgroundImage = this.remake.parallaxImage;
+        // set background image
+        const bg = this.remakeData['bg'][this.state];
+        this.backgroundImage = bg ? `url('remake/SUPER MARIOLAND/background/${bg}')` : 'none';
+        // set parallax image
+        const parallax = this.remakeData['parallax'][this.state];
+        this.parallaxImage = parallax ? `url('remake/SUPER MARIOLAND/parallax/${parallax}')` : 'none';
+        // set tilemap
+        this.tilemapIndex = this.remakeData['tilemapIndex'][this.state];
+        if (this.remakeEnabled) {
+            this.canvasList[2].style.backgroundImage = this.backgroundImage;
+            this.parallaxDiv.style.backgroundImage = this.parallaxImage;
         } else {
             this.canvasList[2].style.backgroundImage = 'none';
-            this.remake.parallaxDiv.style.backgroundImage = 'none';
+            this.parallaxDiv.style.backgroundImage = 'none';
         }
     }
 
     updateState() {
         let state;
+        this.isInLevel = false;
         switch (this.mmu.memory[0x9800]) {
             case 0x16:
+                this.isInLevel = true;
                 // Playing a level
                 if (this.mmu.memory[0x9840] === 0x7f) {
                     // inside a pipe
@@ -422,25 +421,25 @@ class SuperMarioLandPPU extends PPU {
                 state = 14;
                 break;
         }
-        if (state !== undefined && this.remake.state !== state) {
-            this.remake.state = state;
+        if (state !== undefined && this.state !== state) {
+            this.state = state;
             this.onStateChange();
         }
     }
 
     endFrame() {
         super.endFrame();
-        if (this.remake.enabled) {
+        if (this.remakeEnabled) {
             this.updateState();
 
             let bgX = 0;
-            if (this.remake.state < 12) {
+            if (this.state < 12) {
                 const scx = this.mmu.memory[0xff43];
                 const _c0ab = this.mmu.memory[0xc0ab] - 0x0c;
                 bgX = -(_c0ab * 16 + (scx << 28 >> 28)) * this.upscaleFactor;
             }
             this.canvasList[2].style.backgroundPosition = `${bgX}px 0px`;
-            this.remake.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
+            this.parallaxDiv.style.backgroundPosition = `${bgX / 2}px 0px`;
 
             this.drawObjects();
             this.drawWindow();
@@ -448,13 +447,13 @@ class SuperMarioLandPPU extends PPU {
     }
 
     toggleRemake() {
-        this.remake.enabled = !this.remake.enabled;
-        this.canvasList[2].style.backgroundImage = this.remake.enabled ? this.remake.backgroundImage : 'none';
-        this.remake.parallaxDiv.style.backgroundImage = this.remake.enabled ? this.remake.parallaxImage : 'none';
+        this.remakeEnabled = !this.remakeEnabled;
+        this.canvasList[2].style.backgroundImage = this.remakeEnabled ? this.backgroundImage : 'none';
+        this.parallaxDiv.style.backgroundImage = this.remakeEnabled ? this.parallaxImage : 'none';
     }
 
     drawLine(ly) {
-        if (!this.remake.enabled) {
+        if (!this.remakeEnabled) {
             return super.drawLine(ly);
         } else {
             const _ff40 = this.mmu.memory[0xff40];  // LCD Control Register
@@ -462,6 +461,7 @@ class SuperMarioLandPPU extends PPU {
             if (ly % 8 === 0) {
                 // draw a row of BG tiles
                 const y = ly >> 3;
+                const tilemapIndex = (this.isInLevel && y < 2) ? 2  : this.tilemapIndex;
                 const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800);
                 const _ff43 = ly === 0 ? 0 : this.mmu.memory[0xff43];  // SCX - Scroll X (hack to fix first line shaking)
                 const x0 = _ff43 >> 3; // x-coordinate of top-left drawn tile in tile map
@@ -473,7 +473,7 @@ class SuperMarioLandPPU extends PPU {
                     if (tileX <= -8) {
                         tileX &= 0xff;
                     }
-                    this.drawTile(tileOffset, tileX, ly, 2);
+                    this.drawTile(tileOffset, tileX, ly, 2, tilemapIndex);
                 }
                 // check for window
                 if (_ff40 & 0x20) {
@@ -491,18 +491,19 @@ class SuperMarioLandPPU extends PPU {
             for (let x = 0; windowX + 8 * x < 160; x++) {
                 const tileIndex = this.mmu.memory[windowTileMapOffset + x];
                 const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTile(tileOffset, 8 * x + windowX, this.windowY, 2);
+                this.drawTile(tileOffset, 8 * x + windowX, this.windowY, 2, 2);
             }
         }
         this.windowY = undefined;
     }
 
-    drawTile(tileOffset, x, y, layerIndex) {
+    drawTile(tileOffset, x, y, layerIndex, tilemapIndex=undefined) {
+        if (tilemapIndex === undefined) tilemapIndex = this.tilemapIndex;
         const tileCode = this.mmu.memory.slice(tileOffset, tileOffset + 16);
-        const remakeIndex = this.remake.tilemap[tileOffset]?.[tileCode];
+        const remakeIndex = this.remakeData['tilemaps'][tilemapIndex][tileOffset]?.[tileCode];
         if (remakeIndex !== undefined) {
             this.contextList[layerIndex].drawImage(
-                this.remake.tilesImage,
+                this.tilesImage,
                 8 * (remakeIndex % 16) * this.upscaleFactor,
                 8 * ~~(remakeIndex / 16) * this.upscaleFactor,
                 8 * this.upscaleFactor,
@@ -529,7 +530,7 @@ class SuperMarioLandPPU extends PPU {
         for (const object of objects) {
             const offset = 0x8000 + object.tileIndex * 16;
             const tileCode = this.mmu.memory.slice(offset, offset + 16);
-            const remakeIndex = this.remake.tilemap[offset]?.[tileCode];
+            const remakeIndex = this.remakeData['tilemaps'][this.tilemapIndex][offset]?.[tileCode];
             if (remakeIndex !== undefined) {
                 const context = object.attributes & 0x80 ? this.contextList[1] : this.contextList[3];
                 const yScale = object.attributes & 0x40 ? -1 : 1;
@@ -537,7 +538,7 @@ class SuperMarioLandPPU extends PPU {
                 context.save();
                 context.scale(xScale, yScale);
                 context.drawImage(
-                    this.remake.tilesImage,
+                    this.tilesImage,
                     8 * this.upscaleFactor * (remakeIndex % 16),
                     8 * this.upscaleFactor * ~~(remakeIndex / 16),
                     8 * this.upscaleFactor,
