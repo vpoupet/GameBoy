@@ -450,6 +450,7 @@ class SuperMarioLandPPU extends PPU {
         this.remakeEnabled = !this.remakeEnabled;
         this.canvasList[2].style.backgroundImage = this.remakeEnabled ? this.backgroundImage : 'none';
         this.parallaxDiv.style.backgroundImage = this.remakeEnabled ? this.parallaxImage : 'none';
+        document.getElementById("screen-bg").style.backgroundColor = this.remakeEnabled ? "#000000" : "";
     }
 
     drawLine(ly) {

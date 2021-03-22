@@ -62,6 +62,7 @@ class DMG {
         this.start();
 
         // clear backgrounds (from possible remakes)
+        document.getElementById("screen-bg").style.backgroundColor = "";
         for (const canvas of document.getElementsByClassName("screen-layer")) {
             canvas.style.backgroundImage = "none";
         }
