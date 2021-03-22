@@ -34,6 +34,7 @@ function reset() {
     if (gb) {
         gb.stop();
     }
+    document.activeElement.blur();
     document.getElementById("serial-output").innerText = "";
     const romSelect = document.getElementById("rom-select");
     const skipBoot = document.getElementById("skip-boot").checked;
