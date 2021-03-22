@@ -491,7 +491,7 @@ class SuperMarioLandPPU extends PPU {
             for (let x = 0; windowX + 8 * x < 160; x++) {
                 const tileIndex = this.mmu.memory[windowTileMapOffset + x];
                 const tileOffset = _ff40 & 0x10 ? 0x8000 + tileIndex * 16 : 0x9000 + (tileIndex << 24 >> 24) * 16;
-                this.drawTile(tileOffset, 8 * x + windowX, this.windowY, 2, 2);
+                this.drawTile(tileOffset, 8 * x + windowX, this.windowY, 2, 4);
             }
         }
         this.windowY = undefined;

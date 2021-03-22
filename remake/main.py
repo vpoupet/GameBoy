@@ -154,4 +154,4 @@ def make_data(root_dir, page_sets):
 
 
 if __name__ == '__main__':
-    make_data("SUPER MARIOLAND", ("level-00", "pipe", "title", "bonus"))
+    make_data("SUPER MARIOLAND", ("level-00", "pipe", "title", "bonus", "window"))
