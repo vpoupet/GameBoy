@@ -9,6 +9,13 @@ class MBC {
 
     set(addr, val) {
     }
+
+    saveState() {}
+
+    loadState(state) {
+        this.mmu.romBank0 = this.romBanks[0];
+        this.mmu.romBank1 = this.romBanks[1];
+    }
 }
 
 
@@ -77,6 +84,21 @@ class MBC1 extends MBC {
                 this.bankingModeSelect = val & 0x01;
                 break;
         }
+        this.updateBanks();
+    }
+
+    saveState() {
+        const state = {};
+        state.bankingModeSelect = this.bankingModeSelect;
+        state.romBankNumber = this.romBankNumber;
+        state.secondaryBankNumber = this.secondaryBankNumber;
+        return state;
+    }
+
+    loadState(state) {
+        this.bankingModeSelect = state.bankingModeSelect;
+        this.romBankNumber = state.romBankNumber;
+        this.secondaryBankNumber = state.secondaryBankNumber;
         this.updateBanks();
     }
 }

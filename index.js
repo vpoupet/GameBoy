@@ -30,6 +30,32 @@ function stop() {
     document.getElementById("start-button").innerHTML = "Start";
 }
 
+function saveState() {
+    document.activeElement.blur();
+    if (gb.gameTitle) {
+        const stateName = gb.gameTitle;
+        localforage.setItem(stateName, gb.saveState())
+            .then(function (value) {
+                console.log(`State saved.`);
+            });
+    }
+}
+
+function loadState() {
+    document.activeElement.blur();
+    if (gb.gameTitle) {
+        const stateName = gb.gameTitle;
+        localforage.getItem(stateName)
+            .then(function (value) {
+                    gb.loadState(value);
+                    console.log(`State loaded.`);
+                })
+            .catch(function (err) {
+                console.log(`Error loading state: ${err}`);
+                });
+    }
+}
+
 function reset() {
     if (gb) {
         gb.stop();
@@ -68,6 +94,8 @@ window.onload = function () {
             });
     document.getElementById("reset-button").addEventListener("click", reset);
     document.getElementById("refresh-button").addEventListener("click",e => gb.updateInfo());
+    document.getElementById("savestate-button").addEventListener("click",e => saveState());
+    document.getElementById("loadstate-button").addEventListener("click",e => loadState());
     document.getElementById("remake-button").addEventListener("click", e => gb.ppu.toggleRemake());
 
     // ROM select

@@ -293,6 +293,26 @@ class MMU {
         }
     }
 
+    saveState() {
+        const state = {};
+        state.memory = this.memory.slice(0x8000);
+        state.isBiosEnabled = this.isBiosEnabled;
+        state.externalRamEnabled = this.externalRamEnabled;
+        state.mbc = this.mbc.saveState();
+        state.dmaTimer = this.dmaTimer;
+        return state;
+    }
+
+    loadState(state) {
+        for (let i = 0; i < 0x8000; i++) {
+            this.memory[0x8000 + i] = state.memory[i];
+        }
+        this.isBiosEnabled = state.isBiosEnabled;
+        this.externalRamEnabled = state.externalRamEnabled;
+        this.mbc.loadState(state.mbc);
+        this.dmaTimer = state.dmaTimer;
+    }
+
     getRange(addr1, addr2) {
         const values = [];
         for (let i = addr1; i < addr2; i++) {

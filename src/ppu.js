@@ -22,6 +22,12 @@ class PPU {
             canvas.height = 144 * this.upscaleFactor;
         }
         this.imageDataList = this.contextList.map(context => context.createImageData(160 * this.upscaleFactor, 144 * this.upscaleFactor));
+        this.enabled = false;
+        this.windowLine = 0;
+        this.winY = 0;
+        this.lcdcStatus = false;
+        this.clock = 0;
+        this.shouldDrawLines = false;
         this.reset();
     }
 
@@ -36,6 +42,26 @@ class PPU {
         this.setMode(0);
         this.updateCoincidenceFlag();
         this.clearScreen();
+    }
+
+    saveState() {
+        const state = {};
+        state.enabled = this.enabled;
+        state.windowLine = this.windowLine;
+        state.winY = this.winY;
+        state.lcdcStatus = this.lcdcStatus;
+        state.clock = this.clock;
+        state.shouldDrawLines = this.shouldDrawLines;
+        return state;
+    }
+
+    loadState(state) {
+        this.enabled = state.enabled;
+        this.windowLine = state.windowLine;
+        this.winY = state.winY;
+        this.lcdcStatus = state.lcdcStatus;
+        this.clock = state.clock;
+        this.shouldDrawLines = state.shouldDrawLines;
     }
 
     setMode(val) {

@@ -238,6 +238,25 @@ class CPU {
         this.interruptMasterEnable = false;
         this.previousPC = new Array(5).fill(0);
     }
+
+    saveState() {
+        const state = {};
+        state.registers = this.registers;
+        state.isHalted = this.isHalted;
+        state.interruptMasterEnable = this.interruptMasterEnable;
+        state.delayEnableInterrupt = this.delayEnableInterrupt;
+        state.clock = this.clock;
+        return state;
+    }
+
+    loadState(state) {
+        this.registers = state.registers;
+        this.registers16 = new Uint16Array(this.registers.buffer);
+        this.isHalted = state.isHalted;
+        this.interruptMasterEnable = state.interruptMasterEnable;
+        this.delayEnableInterrupt = state.delayEnableInterrupt;
+        this.clock = state.clock;
+    }
 }
 
 export {

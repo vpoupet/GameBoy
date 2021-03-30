@@ -160,6 +160,22 @@ class DMG {
         document.getElementById("start-button").innerText = "Start";
     }
 
+    saveState() {
+        const state = {};
+        state.clock = this.clock;
+        state.cpu = this.cpu.saveState();
+        state.mmu = this.mmu.saveState();
+        state.ppu = this.ppu.saveState();
+        return state;
+    }
+
+    loadState(state) {
+        this.clock = state.clock;
+        this.cpu.loadState(state.cpu);
+        this.mmu.loadState(state.mmu);
+        this.ppu.loadState(state.ppu);
+    }
+
     updateInfo() {
         // Clock
         const cpuClock = document.getElementById("cpu-clock");
