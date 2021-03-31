@@ -12,7 +12,9 @@ class MBC {
 
     saveState() {}
 
-    loadState(state) {
+    loadState(state) {}
+
+    updateBanks() {
         this.mmu.romBank0 = this.romBanks[0];
         this.mmu.romBank1 = this.romBanks[1];
     }

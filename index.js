@@ -1,5 +1,6 @@
 "use strict";
-import { DMG } from "./src/dmg.js";
+import {DMG} from "./src/dmg.js";
+
 let gb = undefined;
 
 
@@ -21,15 +22,6 @@ function runToBreak() {
     console.log("Breakpoint reached");
 }
 
-function start() {
-    gb.start();
-}
-
-function stop() {
-    gb.stop();
-    document.getElementById("start-button").innerHTML = "Start";
-}
-
 function saveState() {
     document.activeElement.blur();
     if (gb.gameTitle) {
@@ -47,19 +39,16 @@ function loadState() {
         const stateName = gb.gameTitle;
         localforage.getItem(stateName)
             .then(function (value) {
-                    gb.loadState(value);
-                    console.log(`State loaded.`);
-                })
+                gb.loadState(value);
+            })
             .catch(function (err) {
                 console.log(`Error loading state: ${err}`);
-                });
+            });
     }
 }
 
 function reset() {
-    if (gb) {
-        gb.stop();
-    }
+    gb?.stop();
     document.activeElement.blur();
     document.getElementById("serial-output").innerText = "";
     const romSelect = document.getElementById("rom-select");
@@ -71,31 +60,25 @@ function reset() {
 
 window.onload = function () {
     // Execution buttons
-    document.getElementById("start-button")
-        .addEventListener("click", e => {
-            if (gb.requestID !== undefined) stop();
-            else start();
-        });
-    document.getElementById("frame-button")
-        .addEventListener(
-            "click",
-            e => {
-                gb.execFrame();
-                if (!gb.shouldUpdateEachFrame) {
-                    gb.updateInfo();
-                }
-            });
-    document.getElementById("step-button")
-        .addEventListener(
-            "click",
-            e => {
-                gb.cpuStep();
-                gb.updateInfo();
-            });
+    document.getElementById("start-button").addEventListener("click", e => {
+        if (gb.requestID !== undefined) gb.stop();
+        else gb.start();
+    });
+    document.getElementById("frame-button").addEventListener("click", e => {
+        gb.execFrame();
+        if (!gb.shouldUpdateEachFrame) {
+            gb.updateInfo();
+        }
+    });
+    document.getElementById("step-button").addEventListener("click", e => {
+        gb.cpuStep();
+        gb.updateInfo();
+    });
     document.getElementById("reset-button").addEventListener("click", reset);
-    document.getElementById("refresh-button").addEventListener("click",e => gb.updateInfo());
-    document.getElementById("savestate-button").addEventListener("click",e => saveState());
-    document.getElementById("loadstate-button").addEventListener("click",e => loadState());
+    document.getElementById("refresh-button").addEventListener("click", e => gb.updateInfo());
+    document.getElementById("savestate-button").addEventListener("click", saveState);
+    document.getElementById("loadstate-button").addEventListener("click", loadState);
+    document.getElementById("rewind-button").addEventListener("click", e => gb.rewind());
     document.getElementById("remake-button").addEventListener("click", e => gb.ppu.toggleRemake());
 
     // ROM select

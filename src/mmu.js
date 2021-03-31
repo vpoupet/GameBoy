@@ -30,11 +30,6 @@ class MMU {
          */
         this.memory = new Uint8Array(new ArrayBuffer(0x10000));
         this.dataView = new DataView(this.memory.buffer);
-        /**
-         * 256 bytes array containing the BIOS instructions
-         * @type {Uint8Array}
-         */
-        this.bios = dmgBios;
         this.isBiosEnabled = false;
         this.mbc = undefined;
         this.romBank0 = undefined;
@@ -42,6 +37,81 @@ class MMU {
         this.externalRamEnabled = false;
         this.externalRam = undefined;
         this.dmaTimer = 0;
+    }
+
+    load(cartridge, execBios=true) {
+        this.isBiosEnabled = execBios;
+        switch (cartridge[0x0147]) {
+            case 0x00:
+                this.mbc = new MBC(this, cartridge);
+                break;
+            case 0x01:
+            case 0x02:
+            case 0x03:
+                this.mbc = new MBC1(this, cartridge);
+                break;
+        }
+        this.mbc.updateBanks();
+
+        // initialize RAM
+        for (let i = 32768; i < 65536; i++) {
+            this.memory[i] = 0x00;
+        }
+
+        if (!execBios) {
+            // set values after boot sequence (from Pan Docs)
+            this.memory[0xff05] = 0x00;
+            this.memory[0xff06] = 0x00;
+            this.memory[0xff07] = 0x00;
+            this.memory[0xff10] = 0x80;
+            this.memory[0xff11] = 0xbf;
+            this.memory[0xff12] = 0xf3;
+            this.memory[0xff14] = 0xbf;
+            this.memory[0xff16] = 0x3f;
+            this.memory[0xff17] = 0x00;
+            this.memory[0xff19] = 0xbf;
+            this.memory[0xff1a] = 0x7f;
+            this.memory[0xff1b] = 0xff;
+            this.memory[0xff1c] = 0x9f;
+            this.memory[0xff1e] = 0xbf;
+            this.memory[0xff20] = 0xff;
+            this.memory[0xff21] = 0x00;
+            this.memory[0xff22] = 0x00;
+            this.memory[0xff23] = 0xbf;
+            this.memory[0xff24] = 0x77;
+            this.memory[0xff25] = 0xf3;
+            this.memory[0xff26] = 0xf1;
+            this.memory[0xff40] = 0x91;
+            this.memory[0xff42] = 0x00;
+            this.memory[0xff43] = 0x00;
+            this.memory[0xff45] = 0x00;
+            this.memory[0xff47] = 0xfc;
+            this.memory[0xff48] = 0xff;
+            this.memory[0xff49] = 0xff;
+            this.memory[0xff4a] = 0x00;
+            this.memory[0xff4b] = 0x00;
+            this.memory[0xffff] = 0x00;
+        }
+    }
+
+    saveState() {
+        const state = {};
+        state.memory = this.memory.slice(0x8000);
+        state.isBiosEnabled = this.isBiosEnabled;
+        state.externalRamEnabled = this.externalRamEnabled;
+        state.mbc = this.mbc.saveState();
+        state.dmaTimer = this.dmaTimer;
+        return state;
+    }
+
+    loadState(state) {
+        for (let i = 0; i < 0x8000; i++) {
+            this.memory[0x8000 + i] = state.memory[i];
+        }
+        this.isBiosEnabled = state.isBiosEnabled;
+        this.externalRamEnabled = state.externalRamEnabled;
+        this.mbc.loadState(state.mbc);
+        this.dmaTimer = state.dmaTimer;
     }
 
     /**
@@ -76,7 +146,7 @@ class MMU {
                 if (0x0000 <= addr && addr < 0x0100) {
                     // if BIOS is still loaded, read from bios, otherwise from ROM bank 0
                     if (this.isBiosEnabled) {
-                        return this.bios[addr];
+                        return dmgBios[addr];
                     } else {
                         return this.romBank0[addr];
                     }
@@ -232,85 +302,6 @@ class MMU {
     set16(addr, val) {
         this.set(addr, val);
         this.set(addr + 1, val >> 8);
-    }
-
-    reset(cartridge, execBios=true) {
-        this.isBiosEnabled = execBios;
-
-        switch (cartridge[0x0147]) {
-            case 0x00:
-                this.mbc = new MBC(this, cartridge);
-                break;
-            case 0x01:
-            case 0x02:
-            case 0x03:
-                this.mbc = new MBC1(this, cartridge);
-                break;
-        }
-        this.romBank0 = this.mbc.romBanks[0];
-        this.romBank1 = this.mbc.romBanks[1];
-        this.externalRamEnabled = false;
-        this.externalRam = undefined;
-
-        // initialize RAM
-        for (let i = 32768; i < 65536; i++) {
-            this.memory[i] = 0x00;
-        }
-
-        if (!execBios) {
-            // set values after boot sequence (from Pan Docs)
-            this.memory[0xff05] = 0x00;
-            this.memory[0xff06] = 0x00;
-            this.memory[0xff07] = 0x00;
-            this.memory[0xff10] = 0x80;
-            this.memory[0xff11] = 0xbf;
-            this.memory[0xff12] = 0xf3;
-            this.memory[0xff14] = 0xbf;
-            this.memory[0xff16] = 0x3f;
-            this.memory[0xff17] = 0x00;
-            this.memory[0xff19] = 0xbf;
-            this.memory[0xff1a] = 0x7f;
-            this.memory[0xff1b] = 0xff;
-            this.memory[0xff1c] = 0x9f;
-            this.memory[0xff1e] = 0xbf;
-            this.memory[0xff20] = 0xff;
-            this.memory[0xff21] = 0x00;
-            this.memory[0xff22] = 0x00;
-            this.memory[0xff23] = 0xbf;
-            this.memory[0xff24] = 0x77;
-            this.memory[0xff25] = 0xf3;
-            this.memory[0xff26] = 0xf1;
-            this.memory[0xff40] = 0x91;
-            this.memory[0xff42] = 0x00;
-            this.memory[0xff43] = 0x00;
-            this.memory[0xff45] = 0x00;
-            this.memory[0xff47] = 0xfc;
-            this.memory[0xff48] = 0xff;
-            this.memory[0xff49] = 0xff;
-            this.memory[0xff4a] = 0x00;
-            this.memory[0xff4b] = 0x00;
-            this.memory[0xffff] = 0x00;
-        }
-    }
-
-    saveState() {
-        const state = {};
-        state.memory = this.memory.slice(0x8000);
-        state.isBiosEnabled = this.isBiosEnabled;
-        state.externalRamEnabled = this.externalRamEnabled;
-        state.mbc = this.mbc.saveState();
-        state.dmaTimer = this.dmaTimer;
-        return state;
-    }
-
-    loadState(state) {
-        for (let i = 0; i < 0x8000; i++) {
-            this.memory[0x8000 + i] = state.memory[i];
-        }
-        this.isBiosEnabled = state.isBiosEnabled;
-        this.externalRamEnabled = state.externalRamEnabled;
-        this.mbc.loadState(state.mbc);
-        this.dmaTimer = state.dmaTimer;
     }
 
     getRange(addr1, addr2) {

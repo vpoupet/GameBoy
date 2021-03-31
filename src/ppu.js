@@ -11,23 +11,17 @@ const colors = hexColors.map(h => Number("0xFF" + h.slice(5, 7) + h.slice(3, 5) 
 
 
 class PPU {
-    constructor(dmg) {
+    constructor(dmg, upscaleFactor=1) {
         this.dmg = dmg;
         this.mmu = dmg.mmu;
         this.canvasList = [...document.getElementsByClassName("screen-layer")];
         this.contextList = this.canvasList.map(c => c.getContext('2d'));
-        this.upscaleFactor = 2;
+        this.upscaleFactor = upscaleFactor;
         for (const canvas of this.canvasList) {
             canvas.width = 160 * this.upscaleFactor;
             canvas.height = 144 * this.upscaleFactor;
         }
         this.imageDataList = this.contextList.map(context => context.createImageData(160 * this.upscaleFactor, 144 * this.upscaleFactor));
-        this.enabled = false;
-        this.windowLine = 0;
-        this.winY = 0;
-        this.lcdcStatus = false;
-        this.clock = 0;
-        this.shouldDrawLines = false;
         this.reset();
     }
 
@@ -358,7 +352,7 @@ class PPU {
 
 class SuperMarioLandPPU extends PPU {
     constructor(dmg) {
-        super(dmg);
+        super(dmg, 2);
         this.windowY = undefined;
         this.state = 0;
         this.remakeLoaded = false;
@@ -474,6 +468,7 @@ class SuperMarioLandPPU extends PPU {
 
     toggleRemake() {
         this.remakeEnabled = !this.remakeEnabled;
+        this.upscaleFactor = this.remakeEnabled ? 2 : 1;
         this.canvasList[2].style.backgroundImage = this.remakeEnabled ? this.backgroundImage : 'none';
         this.parallaxDiv.style.backgroundImage = this.remakeEnabled ? this.parallaxImage : 'none';
         document.getElementById("screen-bg").style.backgroundColor = this.remakeEnabled ? "#000000" : "";

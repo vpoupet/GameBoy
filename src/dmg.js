@@ -3,8 +3,8 @@ import {CPU} from './cpu.js';
 import {MMU, hex} from './mmu.js';
 import {PPU, GamePPU} from './ppu.js';
 import {asmCodes, asmCodesCB} from "./opcodes.js";
-
-
+const REWIND_CLOCK_INTERVAL = 3 * 2 ** 22;  // every 3 seconds
+const NB_REWIND_STATES = 100;               // save history for up to 5 minutes
 class DMG {
     constructor() {
         /**
@@ -32,6 +32,14 @@ class DMG {
         this.requestID = undefined;
         this.viewAddress = 0;
         this.gameTitle = undefined;
+        this.rewindStates = [];
+
+        // clear backgrounds (from possible remakes)
+        document.getElementById("screen-bg").style.backgroundColor = "";
+        for (const canvas of document.getElementsByClassName("screen-layer")) {
+            canvas.style.backgroundImage = "none";
+        }
+        document.getElementById("parallax").style.backgroundImage = "none";
     }
 
     loadRom(romFile, execBios = true) {
@@ -48,25 +56,36 @@ class DMG {
                 if (this.gameTitle in GamePPU) {
                     this.ppu = new GamePPU[this.gameTitle](this);
                 }
-                this.reset(bytes, execBios);
+                this.onload(bytes, execBios);
             });
     }
 
-    reset(cartridge, execBios = true) {
-        this.stop();
-        this.clock = 0;
-        this.mmu.reset(cartridge, execBios);
-        this.cpu.reset(execBios);
-        this.ppu.reset();
-        this.updateInfo();
-        this.start();
-
-        // clear backgrounds (from possible remakes)
-        document.getElementById("screen-bg").style.backgroundColor = "";
-        for (const canvas of document.getElementsByClassName("screen-layer")) {
-            canvas.style.backgroundImage = "none";
+    onload(cartridge, execBios = true) {
+        this.mmu.load(cartridge, execBios);
+        if (!execBios) {
+            this.cpu.skipBios();
         }
-        document.getElementById("parallax").style.backgroundImage = "none";
+        this.start();
+    }
+
+    saveState() {
+        const state = {};
+        state.clock = this.clock;
+        state.isNewFrame = this.isNewFrame;
+        state.shouldUpdateEachFrame = this.shouldUpdateEachFrame;
+        state.cpu = this.cpu.saveState();
+        state.mmu = this.mmu.saveState();
+        state.ppu = this.ppu.saveState();
+        return state;
+    }
+
+    loadState(state) {
+        this.clock = state.clock;
+        this.isNewFrame = state.isNewFrame;
+        this.shouldUpdateEachFrame = state.shouldUpdateEachFrame;
+        this.cpu.loadState(state.cpu);
+        this.mmu.loadState(state.mmu);
+        this.ppu.loadState(state.ppu);
     }
 
     /**
@@ -140,8 +159,25 @@ class DMG {
         while (!this.isNewFrame) {
             this.cpuStep();
         }
+        // Make automatic save state if enough time passed since last snapshot
+        const nextRewindClock = REWIND_CLOCK_INTERVAL + (this.rewindStates.length ?  this.rewindStates[0].clock : 0);
+        if (this.clock >= nextRewindClock) {
+            this.rewindStates.unshift(this.saveState());
+            if (this.rewindStates.length > NB_REWIND_STATES) {
+                this.rewindStates.length = NB_REWIND_STATES;
+            }
+        }
         if (this.shouldUpdateEachFrame) {
             this.updateInfo();
+        }
+    }
+
+    rewind() {
+        if (this.rewindStates.length > 1) {
+            this.rewindStates.shift();
+        }
+        if (this.rewindStates.length > 0) {
+            this.loadState(this.rewindStates[0]);
         }
     }
 
@@ -158,22 +194,6 @@ class DMG {
             this.updateInfo();
         }
         document.getElementById("start-button").innerText = "Start";
-    }
-
-    saveState() {
-        const state = {};
-        state.clock = this.clock;
-        state.cpu = this.cpu.saveState();
-        state.mmu = this.mmu.saveState();
-        state.ppu = this.ppu.saveState();
-        return state;
-    }
-
-    loadState(state) {
-        this.clock = state.clock;
-        this.cpu.loadState(state.cpu);
-        this.mmu.loadState(state.mmu);
-        this.ppu.loadState(state.ppu);
     }
 
     updateInfo() {

@@ -28,6 +28,27 @@ class CPU {
         this.previousPC = new Array(5).fill(0);
     }
 
+    saveState() {
+        const state = {};
+        state.registers = this.registers;
+        state.isHalted = this.isHalted;
+        state.interruptMasterEnable = this.interruptMasterEnable;
+        state.delayEnableInterrupt = this.delayEnableInterrupt;
+        state.previousPC = this.previousPC;
+        state.clock = this.clock;
+        return state;
+    }
+
+    loadState(state) {
+        this.registers = state.registers;
+        this.registers16 = new Uint16Array(this.registers.buffer);
+        this.isHalted = state.isHalted;
+        this.interruptMasterEnable = state.interruptMasterEnable;
+        this.delayEnableInterrupt = state.delayEnableInterrupt;
+        this.previousPC = state.previousPC;
+        this.clock = state.clock;
+    }
+
     // 8-bit registers getters and setters
     get a() {
         return this.registers[1];
@@ -219,43 +240,13 @@ class CPU {
         return this.clock;
     }
 
-    reset(execBios = true) {
-        if (execBios) {
-            this.af = 0;
-            this.bc = 0;
-            this.de = 0;
-            this.hl = 0;
-            this.sp = 0;
-            this.pc = 0;
-        } else {
-            this.af = 0x01b0;
-            this.bc = 0x0013;
-            this.de = 0x00d8;
-            this.hl = 0x014d;
-            this.sp = 0xfffe;
-            this.pc = 0x100;
-        }
-        this.interruptMasterEnable = false;
-        this.previousPC = new Array(5).fill(0);
-    }
-
-    saveState() {
-        const state = {};
-        state.registers = this.registers;
-        state.isHalted = this.isHalted;
-        state.interruptMasterEnable = this.interruptMasterEnable;
-        state.delayEnableInterrupt = this.delayEnableInterrupt;
-        state.clock = this.clock;
-        return state;
-    }
-
-    loadState(state) {
-        this.registers = state.registers;
-        this.registers16 = new Uint16Array(this.registers.buffer);
-        this.isHalted = state.isHalted;
-        this.interruptMasterEnable = state.interruptMasterEnable;
-        this.delayEnableInterrupt = state.delayEnableInterrupt;
-        this.clock = state.clock;
+    skipBios() {
+        this.af = 0x01b0;
+        this.bc = 0x0013;
+        this.de = 0x00d8;
+        this.hl = 0x014d;
+        this.sp = 0xfffe;
+        this.pc = 0x100;
     }
 }
 
