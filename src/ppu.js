@@ -11,7 +11,7 @@ const colors = hexColors.map(h => Number("0xFF" + h.slice(5, 7) + h.slice(3, 5) 
 
 
 class PPU {
-    constructor(dmg, upscaleFactor=1) {
+    constructor(dmg, upscaleFactor = 1) {
         this.dmg = dmg;
         this.mmu = dmg.mmu;
         this.canvasList = [...document.getElementsByClassName("screen-layer")];
@@ -468,7 +468,7 @@ class SuperMarioLandPPU extends PPU {
 
     toggleRemake() {
         this.remakeEnabled = !this.remakeEnabled;
-        this.upscaleFactor = this.remakeEnabled ? 2 : 1;
+        // this.upscaleFactor = this.remakeEnabled ? 2 : 1;
         this.canvasList[2].style.backgroundImage = this.remakeEnabled ? this.backgroundImage : 'none';
         this.parallaxDiv.style.backgroundImage = this.remakeEnabled ? this.parallaxImage : 'none';
         document.getElementById("screen-bg").style.backgroundColor = this.remakeEnabled ? "#000000" : "";
@@ -483,7 +483,7 @@ class SuperMarioLandPPU extends PPU {
             if (ly % 8 === 0) {
                 // draw a row of BG tiles
                 const y = ly >> 3;
-                const tilemapIndex = (this.isInLevel && y < 2) ? 2  : this.tilemapIndex;
+                const tilemapIndex = (this.isInLevel && y < 2) ? 2 : this.tilemapIndex;
                 const bgTileMapOffset = (_ff40 & 0x08 ? 0x9c00 : 0x9800);
                 const _ff43 = ly === 0 ? 0 : this.mmu.memory[0xff43];  // SCX - Scroll X (hack to fix first line shaking)
                 const x0 = _ff43 >> 3; // x-coordinate of top-left drawn tile in tile map
@@ -519,7 +519,7 @@ class SuperMarioLandPPU extends PPU {
         this.windowY = undefined;
     }
 
-    drawTile(tileOffset, x, y, layerIndex, tilemapIndex=undefined) {
+    drawTile(tileOffset, x, y, layerIndex, tilemapIndex = undefined) {
         if (tilemapIndex === undefined) tilemapIndex = this.tilemapIndex;
         const tileCode = this.mmu.memory.slice(tileOffset, tileOffset + 16);
         const remakeIndex = this.remakeData['tilemaps'][tilemapIndex][tileOffset]?.[tileCode];
