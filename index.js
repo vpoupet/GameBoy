@@ -3,32 +3,13 @@ import {DMG} from "./src/dmg.js";
 
 let gb = undefined;
 
-
-function runToBreak() {
-    let breakCondition = document.getElementById("break-condition").value;
-    gb.ppu.shouldDrawLines = false;
-    if (typeof eval(breakCondition) === "number") {
-        const addr = eval(breakCondition);
-        while (gb.cpu.pc !== addr) {
-            gb.cpuStep();
-        }
-    } else {
-        while (!eval(breakCondition)) {
-            gb.cpuStep();
-        }
-    }
-    gb.ppu.shouldDrawLines = true;
-    gb.updateInfo();
-    console.log("Breakpoint reached");
-}
-
 function saveState() {
     document.activeElement.blur();
     if (gb.gameTitle) {
         const stateName = gb.gameTitle;
         localforage.setItem(stateName, gb.saveState())
             .then(function (value) {
-                console.log(`State saved.`);
+                console.log('State saved.');
             });
     }
 }
@@ -58,11 +39,10 @@ function reset() {
     gb.loadRom(`rom/${romSelect.value}.gb`, !skipBoot);
 }
 
-window.onload = function () {
+window.addEventListener("load", () => {
     // Execution buttons
     document.getElementById("start-button").addEventListener("click", e => {
-        if (gb.requestID !== undefined) gb.stop();
-        else gb.start();
+        gb.toggleStart();
     });
     document.getElementById("frame-button").addEventListener("click", e => {
         gb.execFrame();
@@ -78,28 +58,10 @@ window.onload = function () {
     document.getElementById("refresh-button").addEventListener("click", e => gb.updateInfo());
     document.getElementById("savestate-button").addEventListener("click", saveState);
     document.getElementById("loadstate-button").addEventListener("click", loadState);
-    document.getElementById("rewind-button").addEventListener("click", e => gb.rewind());
     document.getElementById("remake-button").addEventListener("click", e => gb.ppu.toggleRemake());
 
     // ROM select
     document.getElementById("rom-select").addEventListener("change", reset);
-
-    // Break condition
-    document.getElementById("break-condition")
-        .addEventListener(
-            "keydown",
-            e => {
-                if (e.key === 'Enter') {
-                    runToBreak();
-                    gb.setViewAddress(parseInt(e.target.value, 16));
-                }
-            });
-    document.getElementById("break-button")
-        .addEventListener(
-            "click",
-            e => {
-                runToBreak();
-            });
 
     // Update each frame checkbox
     document.getElementById("update-each-frame").addEventListener("change", e => {
@@ -140,4 +102,4 @@ window.onload = function () {
             });
 
     reset();
-};
+});

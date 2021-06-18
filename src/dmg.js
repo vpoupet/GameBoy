@@ -3,8 +3,7 @@ import {CPU} from './cpu.js';
 import {MMU, hex} from './mmu.js';
 import {PPU, GamePPU} from './ppu.js';
 import {asmCodes, asmCodesCB} from "./opcodes.js";
-const REWIND_CLOCK_INTERVAL = 3 * 2 ** 22;  // every 3 seconds
-const NB_REWIND_STATES = 100;               // save history for up to 5 minutes
+
 class DMG {
     constructor() {
         /**
@@ -32,7 +31,6 @@ class DMG {
         this.requestID = undefined;
         this.viewAddress = 0;
         this.gameTitle = undefined;
-        this.rewindStates = [];
 
         // clear backgrounds (from possible remakes)
         document.getElementById("screen-bg").style.backgroundColor = "";
@@ -42,22 +40,20 @@ class DMG {
         document.getElementById("parallax").style.backgroundImage = "none";
     }
 
-    loadRom(romFile, execBios = true) {
-        fetch(romFile)
-            .then(response => response.arrayBuffer())
-            .then(data => {
-                const bytes = new Uint8Array(data);
-                // get game title from cartridge header
-                this.gameTitle = "";
-                for (let offset = 0x0134; offset < 0x0144; offset++) {
-                    if (bytes[offset] === 0) break;
-                    this.gameTitle += String.fromCharCode(bytes[offset]);
-                }
-                if (this.gameTitle in GamePPU) {
-                    this.ppu = new GamePPU[this.gameTitle](this);
-                }
-                this.onload(bytes, execBios);
-            });
+    async loadRom(romFile, execBios = true) {
+        let response = await fetch(romFile);
+        let data = await response.arrayBuffer();
+        const bytes = new Uint8Array(data);
+        // get game title from cartridge header
+        this.gameTitle = "";
+        for (let offset = 0x0134; offset < 0x0144; offset++) {
+            if (bytes[offset] === 0) break;
+            this.gameTitle += String.fromCharCode(bytes[offset]);
+        }
+        if (this.gameTitle in GamePPU) {
+            this.ppu = new GamePPU[this.gameTitle](this);
+        }
+        this.onload(bytes, execBios);
     }
 
     onload(cartridge, execBios = true) {
@@ -159,25 +155,16 @@ class DMG {
         while (!this.isNewFrame) {
             this.cpuStep();
         }
-        // Make automatic save state if enough time passed since last snapshot
-        const nextRewindClock = REWIND_CLOCK_INTERVAL + (this.rewindStates.length ?  this.rewindStates[0].clock : 0);
-        if (this.clock >= nextRewindClock) {
-            this.rewindStates.unshift(this.saveState());
-            if (this.rewindStates.length > NB_REWIND_STATES) {
-                this.rewindStates.length = NB_REWIND_STATES;
-            }
-        }
         if (this.shouldUpdateEachFrame) {
             this.updateInfo();
         }
     }
 
-    rewind() {
-        if (this.rewindStates.length > 1) {
-            this.rewindStates.shift();
-        }
-        if (this.rewindStates.length > 0) {
-            this.loadState(this.rewindStates[0]);
+    toggleStart() {
+        if (this.requestID !== undefined) {
+            this.stop();
+        } else {
+            this.start();
         }
     }
 
